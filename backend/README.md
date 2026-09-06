@@ -1,0 +1,122 @@
+# Bronquito API (FastAPI + MySQL)
+
+Backend de la plataforma Bronquito. Modela las 9 tablas del documento de arquitectura
+(pacientes, médicos, vínculo médico-paciente, evaluaciones, entrenamientos, rutina activa,
+notas médicas) y expone login real: médicos se registran con mail+contraseña desde la web,
+pacientes inician sesión con DNI+PIN (sin registrarse desde acá — el dispositivo tiene que
+poder funcionar sin la web).
+
+## Estructura
+
+```
+app/
+  main.py             Arranca FastAPI, configura CORS, crea las tablas y carga datos
+                       de ejemplo al iniciar.
+  seed.py              Datos de ejemplo — un médico y tres pacientes de prueba, con
+                       credenciales documentadas ahí mismo para poder probar el login.
+  core/
+    config.py          Lee la configuración (MySQL, CORS, JWT) desde variables de
+                        entorno / .env.
+    database.py         Motor de SQLAlchemy + sesión por request.
+    security.py          Hashing de contraseñas/PIN (bcrypt) + creación/lectura de
+                        tokens de sesión (JWT). Acá vive toda la lógica de "probar
+                        quién sos".
+    deps.py               Dependencias de FastAPI (`get_current_medico`,
+                        `get_current_paciente`) para proteger endpoints con un token.
+  models/                Modelos de SQLAlchemy (una clase = una tabla).
+  schemas/               Modelos de Pydantic: qué forma tiene lo que la API recibe y
+                        devuelve. Sirven además para que FastAPI valide automáticamente
+                        los requests (por ejemplo, que el PIN tenga 4 dígitos).
+  routers/
+    auth.py               Registro de médico, login de médico, login de paciente,
+                        "olvidé mi contraseña" / resetearla.
+    medicos.py             Perfil del médico logueado, sus pacientes vinculados,
+                        vincular un paciente nuevo por DNI.
+    pacientes.py            Perfil del paciente logueado.
+```
+
+## Las 9 tablas (y qué clase de Python es cada una)
+
+| Tabla MySQL | Clase Python | Archivo |
+|---|---|---|
+| `usuarios` | `Paciente` | `models/paciente.py` |
+| `medicos` | `Medico` | `models/medico.py` |
+| `medico_paciente` | `MedicoPaciente` | `models/medico_paciente.py` |
+| `evaluaciones` | `Evaluacion` | `models/evaluacion.py` |
+| `evaluaciones_muestras` | `EvaluacionMuestra` | `models/evaluacion.py` |
+| `entrenamientos` | `Entrenamiento` | `models/entrenamiento.py` |
+| `entrenamientos_graficar` | `EntrenamientoGraficar` | `models/entrenamiento.py` |
+| `rutina` | `Rutina` | `models/rutina.py` |
+| `notas_medicas` | `NotaMedica` | `models/nota_medica.py` |
+
+La tabla de pacientes se llama `usuarios` en MySQL (así la nombraron en el documento de
+arquitectura) pero la clase de Python se llama `Paciente`, más claro para el resto del
+código — es lo que dice `__tablename__ = "usuarios"` arriba de la clase.
+
+## ⚠️ Si ya habías levantado el proyecto antes de este cambio
+
+Las tablas viejas (`medicos`, `entrenamientos`, etc.) tenían columnas totalmente distintas
+a las de ahora. Como `create_all()` sólo crea tablas que no existen — no actualiza las que
+ya existen — necesitás borrar la base vieja una vez antes de levantar de nuevo:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+El `-v` borra también el volumen de MySQL (los datos guardados). Como hasta ahora sólo
+había datos de prueba, no se pierde nada real.
+
+## Credenciales de prueba (cargadas por seed.py)
+
+**Médico:** `belen.fernandez@bronquito.app` / `medico1234`
+
+**Pacientes (DNI / PIN):** `45819569` / `1234` · `38123456` / `5678` · `29987654` / `4321`
+
+## Probar el login desde /docs
+
+1. Entrá a http://localhost:8000/docs
+2. Abrí `POST /auth/medicos/login`, "Try it out", pegá el usuario/contraseña de arriba,
+   "Execute". La respuesta trae un `access_token`.
+3. Para probar un endpoint protegido (por ejemplo `GET /medicos/me`), hacé clic en el
+   botón verde "Authorize" arriba a la derecha de toda la página, pegá ahí el
+   `access_token` que te devolvió el login, y confirmá. A partir de ahí, todos los
+   endpoints protegidos que pruebes desde /docs van a mandar ese token solos.
+
+## Correr en Docker (recomendado)
+
+Ver `../DOCKER.md` en la raíz del repo.
+
+## Correr sin Docker (si querés depurar el backend solo)
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate        # en Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env              # completá según tu MySQL local
+uvicorn app.main:app --reload
+```
+
+## Decisiones a propósito (para que no parezcan olvidos)
+
+- **No hay bloqueo de cuenta por intentos fallidos** (ni de PIN ni de contraseña) — lo
+  charlamos y se decidió no incluirlo en esta primera versión.
+- **Los pacientes no se registran desde acá.** Sólo existen en la base si alguien los
+  cargó (por ahora, `seed.py`; a futuro, la sincronización con la micro SD del
+  dispositivo). El login de paciente sólo verifica DNI+PIN contra lo que ya existe.
+- **"Olvidé mi contraseña" (médicos) devuelve el token en la respuesta de la API**
+  (`reset_token_dev`) en vez de mandarlo por mail de verdad — todavía no hay un servidor
+  de emails configurado. Es un standin de desarrollo, marcado como tal en el código
+  (`app/routers/auth.py`), para poder probar el flujo completo mientras tanto.
+- **La vinculación médico-paciente es directa** (buscar por DNI + botón "Vincular"), sin
+  paso de aceptación por parte del paciente — así lo definieron para esta versión.
+
+## Qué falta (para las próximas etapas, no de esta)
+
+- Endpoints de evaluaciones, entrenamientos, rutina y notas médicas (hoy sólo están las
+  tablas y el login; leer/crear esos registros es el siguiente paso).
+- Migraciones con Alembic en vez de `create_all()` (relevante recién cuando haya datos
+  reales que no se puedan simplemente borrar y recrear).
+- Cambiar el PIN desde la vista de paciente, y actualizar perfil.
+- Mandar el mail real de "olvidé mi contraseña" (necesita un proveedor de emails).

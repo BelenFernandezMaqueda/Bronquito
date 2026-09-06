@@ -1,0 +1,1097 @@
+/* ============================================================
+   Bronquito — identidad visual
+   Portado del mockup HTML original (paleta cian/rosa/amarillo,
+   Baloo 2 + Nunito, motivo de olas y patito) y ampliado con los
+   componentes nuevos de la app funcional.
+   ============================================================ */
+
+:root {
+  --teal-deep: #0a7e96;
+  --teal: #12a8c4;
+  --teal-bright: #1fc1de;
+  --teal-pale: #e6f8fb;
+  --pink: #f0459a;
+  --pink-deep: #c22c78;
+  --pink-soft: #fbd2e7;
+  --yellow: #ffcb3e;
+  --yellow-soft: #ffe9ae;
+  --orange: #f2924b;
+  --ink: #0c3a44;
+  --ink-soft: #5c7c82;
+  --bg: #f7fcfc;
+  --card: #ffffff;
+  --line: #dff0f2;
+  --good: #1f9d64;
+  --good-bg: #def6ea;
+  --warn: #b9820c;
+  --warn-bg: #fdf0d4;
+  --bad: #d1234f;
+  --bad-bg: #fbe1e8;
+  --radius: 20px;
+  --radius-sm: 12px;
+  --shadow: 0 6px 20px rgba(10, 80, 96, 0.08);
+  --focus-ring: 0 0 0 3px rgba(240, 69, 154, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+h1,
+h2,
+h3,
+.display {
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+button {
+  font: inherit;
+}
+
+/* ---------- Foco visible (accesibilidad) ---------- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 8px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -999px;
+  top: 0;
+  background: var(--pink);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 0 0 10px 0;
+  font-weight: 800;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Top wave header ---------- */
+.topwave {
+  position: relative;
+  background: linear-gradient(180deg, var(--teal-bright), var(--teal));
+  padding: 18px 32px 30px;
+  color: #fff;
+  overflow: hidden;
+}
+
+.topwave svg.deco {
+  position: absolute;
+  top: 8px;
+  right: 26px;
+  height: 52px;
+  width: auto;
+  opacity: 0.95;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  position: relative;
+  z-index: 2;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 4px;
+  text-align: left;
+}
+
+.brand-duck {
+  width: 40px;
+  height: 40px;
+  flex: none;
+}
+
+.brand-name {
+  font-family: 'Baloo 2';
+  font-weight: 800;
+  font-size: 24px;
+  letter-spacing: 0.5px;
+}
+
+.brand-tag {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.9;
+  margin-top: -2px;
+}
+
+.role-toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 4px;
+  gap: 2px;
+}
+
+.role-toggle button {
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-family: 'Baloo 2';
+  font-weight: 600;
+  padding: 9px 20px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.role-toggle button.active {
+  background: #fff;
+  color: var(--teal-deep);
+  box-shadow: var(--shadow);
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--pink-soft);
+  color: var(--pink-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-family: 'Baloo 2';
+  flex: none;
+}
+
+.who-name {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.who-role {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.wave-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  line-height: 0;
+  width: 100%;
+  height: 26px;
+}
+
+/* ---------- Layout ---------- */
+main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 32px 60px;
+}
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 22px 24px;
+}
+
+.grid {
+  display: grid;
+  gap: 18px;
+}
+
+.cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.cols-2 {
+  grid-template-columns: 1.3fr 1fr;
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  background: linear-gradient(120deg, var(--pink) 0%, #f773b3 100%);
+  color: #fff;
+  margin-bottom: 20px;
+}
+
+.hero h2 {
+  margin: 0 0 6px;
+  font-size: 24px;
+}
+
+.hero p {
+  margin: 0;
+  opacity: 0.95;
+  font-size: 14.5px;
+  max-width: 440px;
+}
+
+/* ---------- Botones ---------- */
+.btn {
+  border: none;
+  border-radius: 999px;
+  font-family: 'Baloo 2';
+  font-weight: 700;
+  cursor: pointer;
+  padding: 13px 24px;
+  font-size: 15px;
+  transition: 0.15s;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-light {
+  background: #fff;
+  color: var(--pink-deep);
+}
+
+.btn-teal {
+  background: var(--teal);
+  color: #fff;
+}
+
+.btn-pink {
+  background: var(--pink);
+  color: #fff;
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+}
+
+.btn-outline {
+  background: #fff;
+  color: var(--teal-deep);
+  border: 1.5px solid var(--line);
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
+/* ---------- Stat cards ---------- */
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.stat-value {
+  font-family: 'Baloo 2';
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.stat-sub {
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.up {
+  color: var(--good);
+}
+
+.down {
+  color: var(--bad);
+}
+
+.neutral {
+  color: var(--ink-soft);
+}
+
+.stat-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  margin-bottom: 4px;
+}
+
+section.block {
+  margin-top: 20px;
+}
+
+.block-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.block-title h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.link {
+  color: var(--teal-deep);
+  font-weight: 700;
+  font-size: 13.5px;
+  cursor: pointer;
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 2px 4px;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Racha ---------- */
+.streak {
+  display: flex;
+  gap: 10px;
+}
+
+.day {
+  flex: 1;
+  text-align: center;
+  padding: 12px 4px;
+  border-radius: 14px;
+  background: var(--teal-pale);
+}
+
+.day.done {
+  background: var(--teal);
+  color: #fff;
+}
+
+.day.today {
+  outline: 2px solid var(--pink);
+  outline-offset: 2px;
+}
+
+.day-name {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+.day-mark {
+  font-size: 16px;
+  margin-top: 4px;
+}
+
+/* ---------- Sesiones ---------- */
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 6px;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.session-row:last-child {
+  border-bottom: none;
+}
+
+.session-date {
+  width: 78px;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.session-bar-wrap {
+  flex: 1;
+  min-width: 90px;
+  background: var(--teal-pale);
+  border-radius: 8px;
+  height: 10px;
+  overflow: hidden;
+}
+
+.session-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--teal), var(--teal-bright));
+  border-radius: 8px;
+}
+
+.session-meta {
+  width: auto;
+  min-width: 150px;
+  text-align: right;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.badge-good {
+  background: var(--good-bg);
+  color: var(--good);
+}
+
+.badge-warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.badge-bad {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+
+.badge-neutral {
+  background: var(--teal-pale);
+  color: var(--teal-deep);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 28px 16px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+/* ---------- Doctor layout ---------- */
+.doctor-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.patient-list {
+  padding: 14px;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--teal-pale);
+  border-radius: 12px;
+  padding: 9px 12px;
+  margin-bottom: 12px;
+}
+
+.search input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: 'Nunito';
+  font-size: 13.5px;
+  width: 100%;
+  color: var(--ink);
+}
+
+.patient-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-bottom: 2px;
+  width: 100%;
+  border: none;
+  background: none;
+  text-align: left;
+}
+
+.patient-item:hover {
+  background: var(--teal-pale);
+}
+
+.patient-item.active {
+  background: var(--pink-soft);
+}
+
+.p-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--yellow-soft);
+  color: #8a5a00;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-family: 'Baloo 2';
+  font-size: 14px;
+  flex: none;
+}
+
+.p-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.p-name {
+  font-weight: 800;
+  font-size: 13.5px;
+}
+
+.p-sub {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.dot-good {
+  background: var(--good);
+}
+
+.dot-warn {
+  background: var(--warn);
+}
+
+.dot-bad {
+  background: var(--bad);
+}
+
+.add-patient {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1.5px dashed var(--line);
+  color: var(--teal-deep);
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  background: #fff;
+  width: 100%;
+}
+
+.pending-invite {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  background: var(--yellow-soft);
+  margin-bottom: 2px;
+}
+
+.invite-note {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.detail-id h2 {
+  margin: 0 0 4px;
+  font-size: 22px;
+}
+
+.detail-id .p-sub {
+  font-size: 13px;
+}
+
+.tags {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  background: var(--teal-pale);
+  color: var(--teal-deep);
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--teal-pale);
+  border-radius: 999px;
+  padding: 4px;
+  width: fit-content;
+  margin-bottom: 18px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.tab {
+  border: none;
+  background: transparent;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-family: 'Baloo 2';
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--teal-deep);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab.active {
+  background: var(--teal);
+  color: #fff;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 480px;
+}
+
+th {
+  text-align: left;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 8px 10px;
+  border-bottom: 2px solid var(--line);
+}
+
+td {
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 600;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+.chart-wrap {
+  background: var(--teal-pale);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.chart-caption {
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.cal-cell {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  background: var(--teal-pale);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  position: relative;
+  border: none;
+}
+
+.cal-cell.has-session {
+  background: var(--teal);
+  color: #fff;
+}
+
+.cal-cell.empty {
+  background: transparent;
+}
+
+.cal-cell.is-today {
+  outline: 2px solid var(--pink);
+  outline-offset: 1px;
+}
+
+.cal-dow {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
+/* ---------- Modal ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 60, 70, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 16px;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 20px;
+  padding: 30px 34px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.modal.modal-wide {
+  max-width: 460px;
+  text-align: left;
+}
+
+.modal .duck-spin {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 14px;
+}
+
+.modal h3 {
+  margin: 0 0 8px;
+}
+
+.modal p {
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  margin: 0 0 18px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.field {
+  margin-bottom: 14px;
+  text-align: left;
+}
+
+.field label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+
+.field input[type='text'],
+.field input[type='email'],
+.field input[type='number'],
+.field select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--line);
+  background: var(--bg);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.freq-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.freq-option {
+  border: 1.5px solid var(--line);
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 800;
+  font-family: 'Baloo 2';
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.freq-option.active {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: #fff;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinning {
+  animation: spin 1.6s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+/* ---------- Device session simulator ---------- */
+.device-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  margin: 18px 0;
+}
+
+.device-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.device-step.done {
+  color: var(--good);
+}
+
+.device-step.active {
+  color: var(--teal-deep);
+}
+
+.step-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--teal-pale);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex: none;
+}
+
+.device-step.done .step-dot {
+  background: var(--good-bg);
+  color: var(--good);
+}
+
+.device-step.active .step-dot {
+  background: var(--teal);
+  color: #fff;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 16px 0;
+  text-align: left;
+}
+
+.result-item {
+  background: var(--teal-pale);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.result-item .result-label {
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-weight: 800;
+}
+
+.result-item .result-value {
+  font-family: 'Baloo 2';
+  font-size: 19px;
+  font-weight: 700;
+}
+
+/* ---------- Utilidades ---------- */
+.hide {
+  display: none !important;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mt-16 {
+  margin-top: 16px;
+}
+
+.pill-select {
+  display: flex;
+  gap: 6px;
+  background: var(--teal-pale);
+  border-radius: 999px;
+  padding: 4px;
+  width: fit-content;
+}
+
+@media (max-width: 900px) {
+  main {
+    padding: 20px 16px 48px;
+  }
+  .topwave {
+    padding: 16px 18px 26px;
+  }
+  .cols-3 {
+    grid-template-columns: 1fr;
+  }
+  .cols-2 {
+    grid-template-columns: 1fr;
+  }
+  .doctor-layout {
+    grid-template-columns: 1fr;
+  }
+  .hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .session-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .result-grid {
+    grid-template-columns: 1fr;
+  }
+  table {
+    min-width: 420px;
+  }
+}
+
+@media (max-width: 520px) {
+  .brand-name {
+    font-size: 20px;
+  }
+  .role-toggle button {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+  .who-name,
+  .who-role {
+    display: none;
+  }
+}
