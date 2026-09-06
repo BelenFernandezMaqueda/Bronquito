@@ -30,6 +30,31 @@ class Settings(BaseSettings):
     # Cuánto dura válido el link/token de "olvidé mi contraseña".
     reset_token_expire_minutes: int = 30
 
+    # --- Envío de mails -------------------------------------------------------
+    # Por defecto apunta a Mailpit (servicio del docker-compose): un servidor
+    # SMTP falso que atrapa los mails SIN mandarlos y los muestra en
+    # http://localhost:8025. Para mandar mails de verdad (Gmail u otro
+    # proveedor), se cambian estos valores en el .env — ver .env.example.
+    smtp_host: str = "mailpit"
+    smtp_port: int = 1025
+    smtp_user: str = ""
+    smtp_password: str = ""
+    # STARTTLS = puerto 587 (Gmail). SSL directo = puerto 465. Ninguno de los
+    # dos = sin cifrar (Mailpit en dev). Poné como mucho uno en True.
+    smtp_starttls: bool = False
+    smtp_ssl: bool = False
+    # Remitente que ve el destinatario. Con Gmail tiene que ser la misma
+    # cuenta autenticada (o un alias verificado de esa cuenta).
+    email_from: str = "Bronquito <no-reply@bronquito.local>"
+    # Si es False, `enviar_email` no intenta conectarse a ningún SMTP: sólo
+    # loguea lo que hubiera mandado. Útil para tests y para apagar el envío
+    # sin tocar código.
+    email_enabled: bool = True
+
+    # URL pública del frontend, para armar los links de los mails (verificar
+    # dirección de mail, resetear contraseña/PIN).
+    frontend_url: str = "http://localhost:5173"
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property

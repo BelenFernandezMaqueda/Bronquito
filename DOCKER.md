@@ -50,6 +50,10 @@ Cuando esté todo arriba vas a poder abrir:
 - **http://localhost:5173** → la web (React)
 - **http://localhost:8000/docs** → la documentación interactiva de la API (Swagger UI,
   generada sola por FastAPI) — ahí podés probar cada endpoint a mano, sin escribir código
+- **http://localhost:8025** → Mailpit: la bandeja de entrada de mentira donde caen todos
+  los mails que manda el backend (verificación de cuenta, recuperar contraseña). En
+  desarrollo no se manda nada a direcciones reales — ver `backend/README.md`, sección
+  "Mails".
 - **localhost:3306** → MySQL, para conectarte con un cliente si querés (ver sección VS
   Code en el README principal)
 

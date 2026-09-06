@@ -14,6 +14,7 @@ import {
   pacienteActualId,
   HOY,
 } from '../../data/mockData'
+import { useSession } from '../../auth/session'
 
 type SubVista = 'resumen' | 'calendario' | 'historial'
 
@@ -21,6 +22,7 @@ export function PatientDashboard() {
   const [subVista, setSubVista] = useState<SubVista>('resumen')
   const [sesionAbierta, setSesionAbierta] = useState<'entrenamiento' | 'calibracion' | null>(null)
 
+  const { perfil } = useSession()
   const paciente = pacientes.find((p) => p.id === pacienteActualId)!
   const racha = rachaSemanalDe(pacienteActualId)
   const resumen = resumenProgresoDe(pacienteActualId)
@@ -32,7 +34,9 @@ export function PatientDashboard() {
     [sesiones, calibraciones],
   )
 
-  const primerNombre = paciente.nombre.split(' ')[0]
+  // El nombre sale de la sesión real; el resto del dashboard todavía es mock.
+  const primerNombre =
+    (perfil?.rol === 'paciente' && perfil.datos.nombre) || paciente.nombre.split(' ')[0]
 
   return (
     <div id="contenido-principal">

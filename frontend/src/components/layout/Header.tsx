@@ -1,19 +1,32 @@
 import { DuckLogo } from '../ui/DuckLogo'
 import { WaveBottom } from '../ui/WaveBottom'
-import type { Role } from '../../types'
-import { medicos, pacientes, pacienteActualId, medicoActualId } from '../../data/mockData'
+import { useSession } from '../../auth/session'
 
-interface HeaderProps {
-  rol: Role
-  onCambiarRol: (rol: Role) => void
+function iniciales(nombre: string, apellido: string, fallback: string): string {
+  const a = nombre.trim()[0] ?? ''
+  const b = apellido.trim()[0] ?? ''
+  const ini = (a + b) || fallback.replace(/[^a-zA-Z]/g, '').slice(0, 2)
+  return (ini || '??').toUpperCase()
 }
 
-export function Header({ rol, onCambiarRol }: HeaderProps) {
-  const paciente = pacientes.find((p) => p.id === pacienteActualId)
-  const medico = medicos.find((m) => m.id === medicoActualId)
-  const usuario = rol === 'paciente' ? paciente : medico
-  const nombreMostrado = rol === 'paciente' ? usuario?.nombre : medico?.nombre
-  const inicialesMostradas = usuario?.avatarIniciales ?? '??'
+export function Header() {
+  const { perfil, cerrarSesion } = useSession()
+
+  let nombreMostrado = ''
+  let etiquetaRol = ''
+  let ini = '??'
+  if (perfil?.rol === 'medico') {
+    const { nombre, apellido, usuario } = perfil.datos
+    nombreMostrado = `${nombre} ${apellido}`.trim() || usuario
+    etiquetaRol = 'Médico/a'
+    ini = iniciales(nombre, apellido, usuario)
+  } else if (perfil?.rol === 'paciente') {
+    const { nombre, apellido, email, dni } = perfil.datos
+    const nombreCompleto = `${nombre ?? ''} ${apellido ?? ''}`.trim()
+    nombreMostrado = nombreCompleto || email || `DNI ${dni}`
+    etiquetaRol = 'Paciente'
+    ini = iniciales(nombre ?? '', apellido ?? '', email ?? dni)
+  }
 
   return (
     <header className="topwave">
@@ -30,31 +43,17 @@ export function Header({ rol, onCambiarRol }: HeaderProps) {
           </div>
         </div>
 
-        <div className="role-toggle" role="group" aria-label="Cambiar de vista (demo)">
-          <button
-            className={rol === 'paciente' ? 'active' : ''}
-            aria-pressed={rol === 'paciente'}
-            onClick={() => onCambiarRol('paciente')}
-          >
-            Vista paciente
-          </button>
-          <button
-            className={rol === 'medico' ? 'active' : ''}
-            aria-pressed={rol === 'medico'}
-            onClick={() => onCambiarRol('medico')}
-          >
-            Vista médico
-          </button>
-        </div>
-
         <div className="who">
           <div className="avatar" aria-hidden="true">
-            {inicialesMostradas}
+            {ini}
           </div>
           <div>
             <div className="who-name">{nombreMostrado}</div>
-            <div className="who-role">{rol === 'paciente' ? 'Paciente' : 'Médica'}</div>
+            <div className="who-role">{etiquetaRol}</div>
           </div>
+          <button className="btn btn-ghost btn-sm" onClick={cerrarSesion}>
+            Salir
+          </button>
         </div>
       </div>
       <WaveBottom />

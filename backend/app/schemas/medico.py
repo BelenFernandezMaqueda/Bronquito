@@ -8,6 +8,8 @@ class MedicoPerfilOut(BaseModel):
 
     id_medico: int
     usuario: str
+    nombre: str
+    apellido: str
     fecha_registro: date
 
 
