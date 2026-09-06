@@ -68,7 +68,9 @@ en la terminal integrada de VS Code, `` Ctrl+` ``).
   API REST documentada en `/docs`. Mirá `backend/README.md` para la lista de endpoints.
 - **MySQL** guarda todo. Sus datos persisten en un volumen de Docker (`mysql_data`) entre
   reinicios — no se pierden cada vez que apagás los contenedores, salvo que corras
-  `docker compose down -v` a propósito.
+  `docker compose down -v` a propósito. Para **mirar qué hay en las tablas** (por terminal,
+  desde VS Code, o con un cliente tipo DBeaver) hay instrucciones en
+  `backend/README.md`, sección "Ver los datos de las tablas".
 
 ## Próximo paso sugerido: conectar el frontend a la API
 

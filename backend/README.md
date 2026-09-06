@@ -53,6 +53,54 @@ La tabla de pacientes se llama `usuarios` en MySQL (así la nombraron en el docu
 arquitectura) pero la clase de Python se llama `Paciente`, más claro para el resto del
 código — es lo que dice `__tablename__ = "usuarios"` arriba de la clase.
 
+## Ver los datos de las tablas
+
+Con el stack levantado (`docker compose up`), hay tres formas:
+
+### 1. Desde la terminal, rápido
+
+`docker compose exec` entra al contenedor de MySQL y corre una consulta:
+
+```bash
+# Todos los pacientes y todos los médicos
+docker compose exec db mysql --default-character-set=utf8mb4 \
+  -ubronquito -pchangeme_bronquito bronquito -e \
+  "SELECT id_paciente,nombre,apellido,dni,email,origen FROM usuarios;
+   SELECT id_medico,nombre,apellido,usuario FROM medicos;"
+```
+
+Cambiá `changeme_bronquito` por tu `MYSQL_PASSWORD` real del `.env`. El
+`--default-character-set=utf8mb4` es para que los acentos no salgan como `Bel�n`.
+
+Para una sesión interactiva (escribir varias consultas):
+
+```bash
+docker compose exec db mysql --default-character-set=utf8mb4 -ubronquito -pchangeme_bronquito bronquito
+# ahí adentro:  SHOW TABLES;   DESCRIBE usuarios;   SELECT * FROM rutina;   exit
+```
+
+### 2. Desde VS Code (SQLTools)
+
+La conexión ya viene precargada en `.vscode/settings.json` apuntando a `localhost:3306`.
+Instalá las extensiones **SQLTools** + **SQLTools MySQL/MariaDB Driver** (están en las
+recomendadas), abrí el ícono de SQLTools en la barra lateral, conectá, y te pide la
+contraseña (la de `MYSQL_PASSWORD`) sólo la primera vez. Después navegás las tablas con el
+mouse y podés correr consultas en un panel.
+
+### 3. Desde un cliente externo (DBeaver, TablePlus, etc.)
+
+MySQL está expuesto en `localhost:3306` mientras Docker corre. Datos de conexión:
+
+| | |
+|---|---|
+| Host | `localhost` |
+| Puerto | `3306` |
+| Base | `bronquito` (= `MYSQL_DATABASE`) |
+| Usuario | `bronquito` (= `MYSQL_USER`) |
+| Contraseña | la de `MYSQL_PASSWORD` en tu `.env` |
+
+> Recordá: la tabla de pacientes se llama **`usuarios`**, no `pacientes`.
+
 ## ⚠️ Si ya habías levantado el proyecto antes de este cambio
 
 Las tablas viejas (`medicos`, `entrenamientos`, etc.) tenían columnas totalmente distintas
