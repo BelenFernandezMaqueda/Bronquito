@@ -5,3 +5,8 @@ dist-ssr
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
+
+# Artefactos que emite `tsc -b` (composite) al chequear tipos
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts

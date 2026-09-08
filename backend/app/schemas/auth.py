@@ -1,6 +1,10 @@
+from datetime import date
 from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
+
+
+# --- Médicos ---------------------------------------------------------------
 
 
 class MedicoRegistro(BaseModel):
@@ -8,6 +12,8 @@ class MedicoRegistro(BaseModel):
 
     usuario: EmailStr
     contrasena: str = Field(min_length=8, description="Mínimo 8 caracteres")
+    nombre: str = Field(min_length=1, max_length=80)
+    apellido: str = Field(min_length=1, max_length=80)
     acepto_terminos: bool
 
     @field_validator("acepto_terminos")
@@ -23,9 +29,44 @@ class MedicoLogin(BaseModel):
     contrasena: str
 
 
+# --- Pacientes ------------------------------------------------------------
+
+
+class PacienteRegistro(BaseModel):
+    """
+    Registro de paciente DESDE LA WEB (`origen = "web"`). Pide todo el perfil
+    clínico de una, porque acá no hay un dispositivo que lo aporte después.
+
+    Las cuentas que nacen del dispositivo NO pasan por este schema: llegan ya
+    creadas y completan lo que falte (el mail) con `PATCH /pacientes/me`.
+    """
+
+    dni: str = Field(min_length=6, max_length=20)
+    pin: str = Field(pattern=r"^\d{4}$", description="4 dígitos")
+    nombre: str = Field(min_length=1, max_length=80)
+    apellido: str = Field(min_length=1, max_length=80)
+    email: EmailStr
+    altura_cm: float = Field(gt=0, lt=300)
+    peso_kg: float = Field(gt=0, lt=500)
+    fecha_nacimiento: date
+    sexo: Literal["F", "M", "X"]
+    fumador: bool = False
+    acepto_terminos: bool
+
+    @field_validator("acepto_terminos")
+    @classmethod
+    def debe_aceptar_terminos(cls, v: bool) -> bool:
+        if not v:
+            raise ValueError("Tenés que aceptar los términos y la política de privacidad para registrarte.")
+        return v
+
+
 class PacienteLogin(BaseModel):
     dni: str = Field(min_length=6, max_length=20)
     pin: str = Field(pattern=r"^\d{4}$", description="4 dígitos")
+
+
+# --- Salida común -------------------------------------------------------
 
 
 class TokenOut(BaseModel):
@@ -34,19 +75,35 @@ class TokenOut(BaseModel):
     rol: Literal["medico", "paciente"]
 
 
+# --- Recuperar credencial (mismo mecanismo para médico y paciente) ------
+# El médico se identifica siempre por mail; el paciente puede identificarse
+# por mail o por DNI, pero el flujo interno (generar token, vencimiento,
+# respuesta genérica, standin de desarrollo) es idéntico en los dos casos.
+
+
 class OlvideContrasenaRequest(BaseModel):
+    """Médico: 'olvidé mi contraseña'."""
+
     usuario: EmailStr
 
 
-class OlvideContrasenaOut(BaseModel):
+class OlvidePinRequest(BaseModel):
+    """Paciente: 'olvidé mi PIN'. `identificador` = su mail o su DNI."""
+
+    identificador: str = Field(min_length=4)
+
+
+class RecuperacionOut(BaseModel):
+    # Siempre el mismo mensaje genérico, exista o no la cuenta. El token del
+    # link va sólo por mail, nunca en esta respuesta.
     mensaje: str
-    # OJO: esto es un facilitador de DESARROLLO. En producción este token
-    # jamás se devuelve en la respuesta HTTP — se manda por mail y listo.
-    # Lo dejamos visible acá para poder probar el flujo completo sin tener
-    # un servidor de emails configurado todavía.
-    reset_token_dev: str | None = None
 
 
 class ResetearContrasenaRequest(BaseModel):
     token: str
     nueva_contrasena: str = Field(min_length=8)
+
+
+class ResetearPinRequest(BaseModel):
+    token: str
+    nuevo_pin: str = Field(pattern=r"^\d{4}$", description="4 dígitos")

@@ -26,6 +26,10 @@ class Medico(Base):
     # Igual que el PIN del paciente: nunca se guarda la contraseña en texto
     # plano, se guarda su hash.
     contrasena_hash: Mapped[str] = mapped_column(String(255))
+    # El médico siempre se registra desde la web con el formulario completo,
+    # así que nombre y apellido nunca faltan (a diferencia del paciente).
+    nombre: Mapped[str] = mapped_column(String(80))
+    apellido: Mapped[str] = mapped_column(String(80))
     fecha_registro: Mapped[date] = mapped_column(Date)
 
     acepto_terminos: Mapped[bool] = mapped_column(Boolean, default=False)

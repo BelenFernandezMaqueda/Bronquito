@@ -25,6 +25,9 @@ docker compose up --build
 Después abrí:
 - http://localhost:5173 — la web
 - http://localhost:8000/docs — la API (documentación interactiva)
+- http://localhost:8025 — Mailpit: acá aparecen los mails que manda el backend
+  (verificación, recuperar contraseña). En dev no se envía nada de verdad; ver
+  `backend/README.md`.
 
 Guía detallada, con capturas de qué esperar y solución de problemas comunes, en
 `DOCKER.md`.
@@ -60,10 +63,10 @@ en la terminal integrada de VS Code, `` Ctrl+` ``).
 
 ## Cómo se relacionan las tres partes
 
-- **`frontend/`** hoy usa datos mock (`frontend/src/data/mockData.ts`) — no le pega a la
-  API todavía. Es intencional: se armó primero la web con datos de mentira para validar
-  la interfaz, y ahora que hay backend real, el siguiente paso natural es reemplazar esas
-  funciones mock por `fetch()` a `http://localhost:8000` (ver "Próximo paso" abajo).
+- **`frontend/`** ya usa la API real para **login / registro / recuperación de contraseña
+  y PIN** (`frontend/src/api/` + `frontend/src/auth/`). El **dashboard** (vistas paciente y
+  médico) todavía usa datos mock (`frontend/src/data/mockData.ts`) — es lo próximo a
+  conectar (ver "Próximo paso" abajo).
 - **`backend/`** expone esos mismos datos (mismos pacientes, mismos IDs) a través de una
   API REST documentada en `/docs`. Mirá `backend/README.md` para la lista de endpoints.
 - **MySQL** guarda todo. Sus datos persisten en un volumen de Docker (`mysql_data`) entre
@@ -72,23 +75,24 @@ en la terminal integrada de VS Code, `` Ctrl+` ``).
   desde VS Code, o con un cliente tipo DBeaver) hay instrucciones en
   `backend/README.md`, sección "Ver los datos de las tablas".
 
-## Próximo paso sugerido: conectar el frontend a la API
+## Próximo paso sugerido: conectar el dashboard a la API
 
-Cuando quieras dar ese paso, avisame y lo hacemos juntos — a grandes rasgos implica:
+El login ya está conectado (hay cliente HTTP en `frontend/src/api/` y sesión en
+`frontend/src/auth/`). Falta el dashboard — a grandes rasgos:
 
-1. Agregar un cliente HTTP simple en el frontend (`fetch` alcanza, no hace falta una
-   librería) que le pegue a `http://localhost:8000`.
-2. Reemplazar, una función a la vez, las funciones de `mockData.ts` (`pacientesDeMedico`,
-   `calibracionesDe`, etc.) por llamadas a esa API, manteniendo la misma forma de datos
-   (los tipos de TypeScript en `frontend/src/types/index.ts` ya están armados para
-   calzar con lo que devuelve el backend).
-3. Manejar los estados de "cargando" y "error" en los componentes, que hoy no existen
-   porque los datos mock están siempre disponibles al instante.
+1. Reconciliar `frontend/src/types/index.ts` con los schemas del backend
+   (`backend/app/schemas/`): hoy **no coinciden** — el mock tiene `nombre`/`edad`/
+   `diagnostico`, el backend tiene `dni`/`altura_cm`/`peso_kg`/`fecha_nacimiento`/`sexo`/
+   `fumador`.
+2. Crear en el backend los endpoints de evaluaciones / entrenamientos / rutina / notas
+   médicas (por ahora sólo están las tablas).
+3. Reemplazar, una función a la vez, las de `mockData.ts` (`pacientesDeMedico`,
+   `calibracionesDe`, etc.) por llamadas a la API, manejando estados de "cargando"/"error".
 
 ## Qué falta para producción (repaso)
 
-- Login real con roles (hoy la web tiene un toggle de demo, sin autenticación).
 - Migraciones de base de datos con Alembic en vez de recrear tablas al arrancar.
+- Mandar por mail (no en la respuesta HTTP) el link de "olvidé mi contraseña / PIN".
 - Dockerfiles de producción (build optimizado + nginx para el frontend, uvicorn sin
   `--reload` para la API) en vez de los actuales, pensados sólo para desarrollo.
 - Sincronización real del dispositivo → base de datos (fuera del alcance de este repo,

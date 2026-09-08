@@ -2,14 +2,21 @@
 
 Aplicación web de **Bronquito**, dispositivo portátil de entrenamiento y evaluación de
 músculos inspiratorios (IMT), para el proyecto de Instrumentación Biomédica. Construida
-con **React + TypeScript + Vite**, sobre datos mock, respetando la identidad visual del
-mockup original (paleta cian/rosa/amarillo, tipografía Baloo 2 + Nunito, motivo de olas y
-patito).
+con **React + TypeScript + Vite**, respetando la identidad visual del mockup original
+(paleta cian/rosa/amarillo, tipografía Baloo 2 + Nunito, motivo de olas y patito).
+
+**Estado:** el **login / registro / recuperación** ya usa la API real
+(`backend/`, ver `../backend/README.md`). El **dashboard** (vista paciente y vista médico)
+todavía usa datos mock (`src/data/mockData.ts`) — es lo próximo a conectar.
 
 ## Cómo correrla
 
-Este proyecto se armó en un entorno sin acceso a internet, así que **no se pudo ejecutar
-`npm install` ni probar el build acá**. Corré esto en tu máquina:
+Lo más simple es levantar todo el monorepo con Docker desde la raíz (`docker compose up`,
+ver `../DOCKER.md`) — eso te da frontend + API + MySQL juntos, que es lo que necesitás para
+que el login funcione.
+
+Para correr sólo el frontend en tu máquina (necesitás la API corriendo aparte en
+`http://localhost:8000`):
 
 ```bash
 npm install
@@ -17,6 +24,9 @@ npm run dev      # entorno de desarrollo, con recarga en caliente
 npm run build    # build de producción (chequea tipos con tsc y luego empaqueta)
 npm run preview  # sirve el build de producción para revisarlo
 ```
+
+La URL de la API se lee de `VITE_API_URL` (default `http://localhost:8000`); el
+`docker-compose.yml` de la raíz ya la setea.
 
 ## Cómo correrla con Docker
 
@@ -36,9 +46,15 @@ de Vite ni el compilador acá), es buena idea que la primera vez que lo abras co
 
 ```
 src/
-  types/index.ts          Modelo de datos (Paciente, Médico, vínculo médico-paciente,
-                           sesiones de calibración y entrenamiento, etc.) — pensado para
-                           mapear directo a un backend real más adelante.
+  api/
+    types.ts               Tipos de request/response de la API (sync con backend/app/schemas).
+    client.ts              Cliente HTTP mínimo (fetch) + todas las funciones de auth
+                           (api.medico.login, api.paciente.registro, etc.).
+  auth/
+    session.tsx            <SessionProvider> + useSession(): guarda el token JWT en
+                           localStorage, trae el perfil del logueado, expone
+                           iniciarSesion / cerrarSesion / refrescarPerfil.
+  types/index.ts          Modelo de datos del dashboard (todavía mock).
   data/mockData.ts         Datos mock + funciones derivadas (racha, adherencia, resumen
                            de progreso, filtrar pacientes de un médico, etc.). Es la única
                            "capa de datos" de la app: el día que haya backend, alcanza con
@@ -47,13 +63,24 @@ src/
   styles/theme.css          Variables de color/tipografía y todas las clases visuales,
                            portadas del mockup HTML y ampliadas para los componentes nuevos.
   components/
-    layout/Header.tsx       Header con olas, logo, toggle de rol y usuario actual.
+    layout/Header.tsx       Header con olas, logo, usuario logueado y botón "Salir".
     ui/                     Piezas reutilizables: DuckLogo, WaveBottom, Modal, StatCard,
                            Badge (estado de sesión / adherencia), MonthCalendar,
                            FlowVolumeChart, PimTrendChart y DeviceSessionModal (simulador
                            del flujo "operar el dispositivo": conectando → sesión en curso
                            → resultado).
   pages/
+    auth/
+      AuthShell.tsx         Marco compartido (patito + tarjeta centrada) de las pantallas de auth.
+      LoginPage.tsx         Login con pestañas paciente (DNI+PIN) / médico (mail+contraseña).
+      RegistroMedicoPage.tsx    Alta de médico.
+      RegistroPacientePage.tsx  Alta de paciente desde la web (nombre + DNI + PIN + mail +
+                           datos clínicos).
+      RecuperarPage.tsx     "Olvidé mi PIN / contraseña" — pide el link de reseteo.
+      ResetearPage.tsx      Setea el nuevo PIN o contraseña con el token del link (?token=).
+    paciente/
+      CompletarPerfilPage.tsx  Pantalla bloqueante para cuentas del dispositivo sin mail:
+                           no entran al dashboard hasta cargar nombre + mail + aceptar términos.
     paciente/PatientDashboard.tsx   Vista paciente: hero + botón "iniciar sesión de hoy",
                            3 stat cards, racha semanal, sesiones recientes, calendario
                            completo e historial (como sub-vistas dentro de la misma página).
@@ -64,22 +91,27 @@ src/
       PatientDetail.tsx     Tabs Calibraciones / Entrenamiento / Calendario + botones para
                            iniciar calibración/entrenamiento "en consultorio".
       FrequencyModal.tsx    Modal para modificar manualmente la frecuencia recomendada.
-  App.tsx                    Estado de rol (paciente/médico) + Header + página activa.
-  main.tsx                   Punto de entrada de React.
+  App.tsx                    Rutas (react-router-dom) + guards: SoloAnonimos / SoloAutenticados,
+                           redirección a "completá tu perfil", y el dashboard según rol.
+  main.tsx                   Punto de entrada: <BrowserRouter> + <SessionProvider> + <App>.
 ```
 
 ## Decisiones de diseño
 
-- **Navegación por toggle, no login real (por ahora).** Como se charló en el pedido, para
-  esta etapa de demo se mantuvo el toggle de rol del mockup en vez de armar un login. El
-  modelo de datos ya distingue `Paciente` de `Medico` como entidades separadas, así que
-  cuando haya backend, el toggle se reemplaza por la sesión autenticada sin tocar el resto
-  de los componentes.
-- **Sin React Router.** Al no depender de rutas de navegación complejas (todo vive dentro
-  de "vista paciente" o "vista médico", con sub-vistas manejadas por estado local), se
-  evitó agregar `react-router-dom` como dependencia extra. Si en el futuro cada vista
-  necesita URL propia (por ejemplo, para compartir el link del detalle de un paciente),
-  es un buen momento para sumarlo.
+- **Login real con la API.** El toggle de rol del mockup se reemplazó por sesión
+  autenticada: el rol sale del token JWT (`src/auth/session.tsx`). El token se guarda en
+  `localStorage` para sobrevivir un refresh; al abrir la app se revalida trayendo el perfil.
+- **React Router (v6).** Se sumó `react-router-dom` para tener URLs reales — clave para el
+  link de reseteo que llega por mail (`/resetear/pin?token=...`). El servidor de Vite ya
+  hace el fallback a `index.html`; un deploy de producción con nginx necesita esa misma
+  regla.
+- **Paciente con perfil incompleto = pantalla bloqueante.** Si `GET /pacientes/me` devuelve
+  `perfil_completo: false` (cuenta del dispositivo a la que le falta nombre, mail o aceptar
+  términos), el guard de rutas lo manda a `/completar-perfil` y no lo deja entrar al
+  dashboard hasta que lo complete. `CompletarPerfilPage` sólo muestra los campos que faltan.
+- **El link de reseteo llega por mail.** `RecuperarPage` sólo confirma "revisá tu casilla";
+  el backend manda el mail con el link a `/resetear/{pin,contrasena}?token=...`. En
+  desarrollo el mail cae en Mailpit (http://localhost:8025); en prod, a la casilla real.
 - **Datos mock centralizados en `mockData.ts`.** Todas las pantallas leen de ahí a través
   de funciones (`pacientesDeMedico`, `calibracionesDe`, `resumenProgresoDe`, etc.) en vez
   de tener los datos hardcodeados en cada componente. Esas funciones son el punto exacto
@@ -93,11 +125,18 @@ src/
   un vínculo en estado `aceptada`; hay además una invitación en estado `pendiente` mockeada
   para mostrar cómo se ve mientras el paciente todavía no aceptó.
 
-## Qué falta para producción
+## Qué falta
 
-- Reemplazar `mockData.ts` por llamadas a una API real (lectura de datos ya sincronizados
-  desde el dispositivo).
-- Login real con roles (paciente/médico) en vez del toggle de demo.
+- **Conectar el dashboard a la API.** `mockData.ts` sigue siendo la capa de datos de las
+  vistas paciente/médico (el Header y el saludo "Hola X" ya usan la sesión real; el resto
+  no). Falta: reconciliar `src/types/index.ts` con los schemas del backend (el mock tiene
+  `edad`/`diagnostico`/`resistenciaActual`; el backend tiene
+  `dni`/`nombre`/`apellido`/`email`/`altura_cm`/`peso_kg`/...), y crear los endpoints de
+  evaluaciones / entrenamientos / rutina / notas que todavía no existen.
 - Persistencia real de acciones que hoy sólo cambian estado en memoria: enviar invitación,
   modificar frecuencia, resultado de una sesión en consultorio.
-- Tests (unitarios de las funciones de `mockData.ts` y de componentes clave).
+- Vincular un paciente desde la vista médico usando `POST /medicos/me/vincular` (hoy el
+  `InvitePatientModal` es sólo visual).
+- Cambiar el PIN estando logueado (hoy sólo vía "olvidé mi PIN").
+- Config de nginx con fallback a `index.html` para el deploy de producción.
+- Tests.

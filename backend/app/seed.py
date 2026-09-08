@@ -8,9 +8,10 @@ Médico de prueba:
     contraseña: medico1234
 
 Pacientes de prueba (dni / pin):
-    45819569 / 1234   (Malena Salerno)
-    38123456 / 5678   (Tomás Herrera)
-    29987654 / 4321   (Rocío Fernández)
+    45819569 / 1234   (Malena Salerno) — perfil completo (con mail)
+    38123456 / 5678   (Tomás Herrera)  — perfil completo (con mail)
+    29987654 / 4321   (Rocío Fernández) — SIN mail: al loguearse cae en la
+                                          pantalla "completá tu perfil"
 """
 
 from datetime import date, datetime, timezone
@@ -20,7 +21,7 @@ from sqlalchemy.orm import Session
 from app.core.security import hashear_secreto
 from app.models.entrenamiento import Entrenamiento, EntrenamientoGraficar
 from app.models.evaluacion import Evaluacion, EvaluacionMuestra
-from app.models.enums import OrigenRutina, TipoEvaluacion
+from app.models.enums import OrigenPaciente, OrigenRutina, TipoEvaluacion
 from app.models.medico import Medico
 from app.models.medico_paciente import MedicoPaciente
 from app.models.nota_medica import NotaMedica
@@ -35,6 +36,8 @@ def seed_if_empty(db: Session) -> None:
     medico = Medico(
         usuario="belen.fernandez@bronquito.app",
         contrasena_hash=hashear_secreto("medico1234"),
+        nombre="Belén",
+        apellido="Fernández",
         fecha_registro=date(2026, 5, 1),
         acepto_terminos=True,
         fecha_aceptacion_terminos=datetime(2026, 5, 1, tzinfo=timezone.utc),
@@ -42,21 +45,36 @@ def seed_if_empty(db: Session) -> None:
     db.add(medico)
     db.flush()  # para que medico.id_medico ya exista antes de usarlo abajo
 
+    # Todos "nacen" del dispositivo (origen=dispositivo). Malena y Tomás ya
+    # completaron su perfil por la web (nombre + mail + términos); Rocío todavía
+    # no cargó el mail (email=None) — sirve para probar "completá tu perfil".
     pacientes = [
         Paciente(
             dni="45819569", pin_hash=hashear_secreto("1234"),
+            nombre="Malena", apellido="Salerno",
+            email="malena.salerno@mail.com",
             altura_cm=171, peso_kg=70, fecha_nacimiento=date(2004, 5, 31),
             sexo="F", fumador=False, fecha_registro=date(2026, 7, 18),
+            origen=OrigenPaciente.dispositivo,
+            acepto_terminos=True,
+            fecha_aceptacion_terminos=datetime(2026, 7, 18, tzinfo=timezone.utc),
         ),
         Paciente(
             dni="38123456", pin_hash=hashear_secreto("5678"),
+            nombre="Tomás", apellido="Herrera",
+            email="tomas.herrera@mail.com",
             altura_cm=178, peso_kg=82, fecha_nacimiento=date(1998, 3, 14),
             sexo="M", fumador=False, fecha_registro=date(2026, 6, 1),
+            origen=OrigenPaciente.dispositivo,
+            acepto_terminos=True,
+            fecha_aceptacion_terminos=datetime(2026, 6, 1, tzinfo=timezone.utc),
         ),
         Paciente(
             dni="29987654", pin_hash=hashear_secreto("4321"),
+            nombre="Rocío", apellido="Fernández",
             altura_cm=160, peso_kg=65, fecha_nacimiento=date(1965, 11, 2),
             sexo="F", fumador=True, fecha_registro=date(2026, 6, 20),
+            origen=OrigenPaciente.dispositivo,
         ),
     ]
     db.add_all(pacientes)

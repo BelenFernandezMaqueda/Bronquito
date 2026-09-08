@@ -19,6 +19,19 @@ services:
       timeout: 5s
       retries: 10
 
+  # Servidor SMTP falso para desarrollo: atrapa TODOS los mails que manda el
+  # backend sin enviarlos a ningún lado, y los muestra en una web.
+  #   - Interfaz web:  http://localhost:8025
+  #   - SMTP (para el backend): mailpit:1025
+  # Para mandar mails de verdad, se configura un SMTP real en el .env (ver
+  # .env.example) y este servicio queda sin usar.
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
   api:
     build: ./backend
     restart: unless-stopped
@@ -29,6 +42,17 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      # Envío de mails. Por defecto apunta a Mailpit (arriba). Para mandar
+      # mails reales, completá estas variables en tu .env — ver .env.example.
+      SMTP_HOST: ${SMTP_HOST:-mailpit}
+      SMTP_PORT: ${SMTP_PORT:-1025}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-false}
+      SMTP_SSL: ${SMTP_SSL:-false}
+      EMAIL_FROM: ${EMAIL_FROM:-Bronquito <no-reply@bronquito.local>}
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-true}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
     ports:
       - "8000:8000"
     volumes:
@@ -36,6 +60,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
   web:
     build: ./frontend
