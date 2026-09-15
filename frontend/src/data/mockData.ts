@@ -6,7 +6,6 @@ import type {
   ResumenProgreso,
   SesionCalibracion,
   SesionEntrenamiento,
-  VinculoMedicoPaciente,
 } from '../types'
 
 /**
@@ -26,12 +25,6 @@ export function diasDesde(fecha: string): number {
   return Math.max(0, Math.round(ms / (1000 * 60 * 60 * 24)))
 }
 
-function isoDiasAtras(dias: number): string {
-  const d = new Date(HOY)
-  d.setDate(d.getDate() - dias)
-  return d.toISOString().slice(0, 10)
-}
-
 // ---------------------------------------------------------------------------
 // Médicos
 // ---------------------------------------------------------------------------
@@ -47,8 +40,6 @@ export const medicos: Medico[] = [
     especialidad: 'Neumonología',
   },
 ]
-
-export const medicoActualId = 'med-1'
 
 // ---------------------------------------------------------------------------
 // Pacientes
@@ -110,63 +101,6 @@ export const pacientes: Paciente[] = [
 ]
 
 export const pacienteActualId = 'pac-1'
-
-// ---------------------------------------------------------------------------
-// Vínculos médico-paciente (no todos los médicos ven a todos los pacientes)
-// ---------------------------------------------------------------------------
-
-export const vinculos: VinculoMedicoPaciente[] = [
-  {
-    id: 'vin-1',
-    medicoId: 'med-1',
-    pacienteId: 'pac-1',
-    estado: 'aceptada',
-    fechaInvitacion: isoDiasAtras(120),
-    fechaAceptacion: isoDiasAtras(119),
-  },
-  {
-    id: 'vin-2',
-    medicoId: 'med-1',
-    pacienteId: 'pac-2',
-    estado: 'aceptada',
-    fechaInvitacion: isoDiasAtras(90),
-    fechaAceptacion: isoDiasAtras(88),
-  },
-  {
-    id: 'vin-3',
-    medicoId: 'med-1',
-    pacienteId: 'pac-3',
-    estado: 'aceptada',
-    fechaInvitacion: isoDiasAtras(60),
-    fechaAceptacion: isoDiasAtras(59),
-  },
-  {
-    id: 'vin-4',
-    medicoId: 'med-1',
-    pacienteId: 'pac-4',
-    estado: 'aceptada',
-    fechaInvitacion: isoDiasAtras(30),
-    fechaAceptacion: isoDiasAtras(29),
-  },
-  // Invitación pendiente: todavía no la aceptó, así que no aparece con datos clínicos.
-  {
-    id: 'vin-5',
-    medicoId: 'med-1',
-    pacienteId: 'pac-5-pendiente',
-    estado: 'pendiente',
-    fechaInvitacion: isoDiasAtras(2),
-  },
-]
-
-// Paciente "fantasma" sólo para representar la invitación pendiente en la UI
-// (todavía no aceptó, así que el médico no tiene su ficha clínica real).
-export const invitacionesPendientes = [
-  {
-    id: 'pac-5-pendiente',
-    nombreOEmailInvitado: 'sofia.moyano@mail.com',
-    fechaInvitacion: isoDiasAtras(2),
-  },
-]
 
 // ---------------------------------------------------------------------------
 // Sesiones de calibración
@@ -328,13 +262,6 @@ export function entrenamientosDe(pacienteId: string): SesionEntrenamiento[] {
   return entrenamientos
     .filter((e) => e.pacienteId === pacienteId)
     .sort((a, b) => +new Date(b.fecha) - +new Date(a.fecha))
-}
-
-export function pacientesDeMedico(medicoId: string): Paciente[] {
-  const ids = vinculos
-    .filter((v) => v.medicoId === medicoId && v.estado === 'aceptada')
-    .map((v) => v.pacienteId)
-  return pacientes.filter((p) => ids.includes(p.id))
 }
 
 export function ultimaSesionDe(pacienteId: string): string | undefined {

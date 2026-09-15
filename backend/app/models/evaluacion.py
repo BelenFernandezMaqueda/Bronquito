@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, Float, ForeignKey
+from sqlalchemy import JSON, DateTime, Enum, Float, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -8,7 +8,7 @@ from app.models.enums import TipoEvaluacion
 
 
 class Evaluacion(Base):
-    """TABLA EVALUACIONES — un registro por cada prueba (espirometría o PIM/PEM)."""
+    """TABLA EVALUACIONES — un registro por cada prueba (espirometría o PIM)."""
 
     __tablename__ = "evaluaciones"
 
@@ -24,33 +24,32 @@ class Evaluacion(Base):
     fivc: Mapped[float | None] = mapped_column(Float, nullable=True)
     fiv1: Mapped[float | None] = mapped_column(Float, nullable=True)
 
-    # Presiones máximas (válvulas cerradas)
+    # Presión máxima (válvulas cerradas)
     pim: Mapped[float | None] = mapped_column(Float, nullable=True)
-    pem: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     temperatura: Mapped[float | None] = mapped_column(Float, nullable=True)
     humedad: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     paciente = relationship("Paciente", back_populates="evaluaciones")
     muestras = relationship(
-        "EvaluacionMuestra", back_populates="evaluacion", order_by="EvaluacionMuestra.tiempo"
+        "EvaluacionMuestra", back_populates="evaluacion", uselist=False
     )
 
 
 class EvaluacionMuestra(Base):
     """
-    TABLA EVALUACIONES_MUESTRAS — los puntos crudos (tiempo/flujo/presión/
-    volumen) de una evaluación, para poder dibujar la curva. Una evaluación
-    tiene muchísimas filas acá (una por cada instante muestreado).
+    TABLA EVALUACIONES_MUESTRAS — la curva cruda (tiempo/flujo/presión/volumen)
+    de una evaluación, para poder dibujarla. Una fila por evaluación: cada
+    columna es un vector con todas las muestras de ese ensayo.
     """
 
     __tablename__ = "evaluaciones_muestras"
 
     id_grafico: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    id_evaluacion: Mapped[int] = mapped_column(ForeignKey("evaluaciones.id_evaluacion"))
-    tiempo: Mapped[float] = mapped_column(Float)
-    flujo: Mapped[float] = mapped_column(Float)
-    presion: Mapped[float] = mapped_column(Float)
-    volumen: Mapped[float] = mapped_column(Float)
+    id_evaluacion: Mapped[int] = mapped_column(ForeignKey("evaluaciones.id_evaluacion"), unique=True)
+    tiempo: Mapped[list[float]] = mapped_column(JSON)
+    flujo: Mapped[list[float]] = mapped_column(JSON)
+    presion: Mapped[list[float]] = mapped_column(JSON)
+    volumen: Mapped[list[float]] = mapped_column(JSON)
 
     evaluacion = relationship("Evaluacion", back_populates="muestras")

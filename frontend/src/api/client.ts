@@ -98,6 +98,11 @@ export const api = {
         body: { token, nueva_contrasena },
       }),
     me: (token: string) => apiFetch<MedicoPerfil>('/medicos/me', { token }),
+    misPacientes: (token: string) => apiFetch<PacientePerfil[]>('/medicos/me/pacientes', { token }),
+    vincularPaciente: (token: string, dni: string, pin: string) =>
+      apiFetch<PacientePerfil>('/medicos/me/vincular', { method: 'POST', body: { dni, pin }, token }),
+    desvincularPaciente: (token: string, idPaciente: number) =>
+      apiFetch<void>(`/medicos/me/pacientes/${idPaciente}`, { method: 'DELETE', token }),
   },
 
   paciente: {

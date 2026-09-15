@@ -5,6 +5,8 @@ import { FlowVolumeChart } from '../../components/ui/FlowVolumeChart'
 import { PimTrendChart } from '../../components/ui/PimTrendChart'
 import { MonthCalendar } from '../../components/ui/MonthCalendar'
 import { DeviceSessionModal } from '../../components/ui/DeviceSessionModal'
+import { Modal } from '../../components/ui/Modal'
+import { TrashIcon } from '../../components/ui/TrashIcon'
 import { FrequencyModal } from './FrequencyModal'
 import {
   calibracionesDe,
@@ -18,13 +20,28 @@ type Tab = 'calibraciones' | 'entrenamiento' | 'calendario'
 
 interface PatientDetailProps {
   paciente: Paciente
+  onDesvincular: () => Promise<void>
 }
 
-export function PatientDetail({ paciente }: PatientDetailProps) {
+export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
   const [tab, setTab] = useState<Tab>('calibraciones')
   const [frecuencia, setFrecuencia] = useState(paciente.frecuenciaSemanal)
   const [modalFrecuencia, setModalFrecuencia] = useState(false)
   const [sesionConsultorio, setSesionConsultorio] = useState<'entrenamiento' | 'calibracion' | null>(null)
+  const [confirmarDesvinculo, setConfirmarDesvinculo] = useState(false)
+  const [desvinculando, setDesvinculando] = useState(false)
+  const [errorDesvinculo, setErrorDesvinculo] = useState<string | null>(null)
+
+  async function confirmarYDesvincular() {
+    setDesvinculando(true)
+    setErrorDesvinculo(null)
+    try {
+      await onDesvincular()
+    } catch (err) {
+      setErrorDesvinculo(err instanceof Error ? err.message : 'No se pudo desvincular al paciente.')
+      setDesvinculando(false)
+    }
+  }
 
   const calibraciones = calibracionesDe(paciente.id)
   const entrenamientos = entrenamientosDe(paciente.id)
@@ -39,6 +56,17 @@ export function PatientDetail({ paciente }: PatientDetailProps) {
 
   return (
     <div className="card">
+      <div className="detail-toolbar">
+        <button
+          className="btn-icon btn-icon-pink"
+          onClick={() => setConfirmarDesvinculo(true)}
+          aria-label="Desvincular paciente"
+          title="Desvincular paciente"
+        >
+          <TrashIcon className="icon-16" />
+        </button>
+      </div>
+
       <div className="detail-header">
         <div className="detail-id">
           <h2>{paciente.nombre}</h2>
@@ -193,6 +221,33 @@ export function PatientDetail({ paciente }: PatientDetailProps) {
           nombrePaciente={paciente.nombre}
           onClose={() => setSesionConsultorio(null)}
         />
+      )}
+
+      {confirmarDesvinculo && (
+        <Modal
+          titulo="Desvincular paciente"
+          onClose={() => setConfirmarDesvinculo(false)}
+          acciones={
+            <>
+              <button
+                className="btn btn-outline"
+                onClick={() => setConfirmarDesvinculo(false)}
+                disabled={desvinculando}
+              >
+                Cancelar
+              </button>
+              <button className="btn btn-teal" onClick={confirmarYDesvincular} disabled={desvinculando}>
+                {desvinculando ? 'Desvinculando…' : 'Sí, desvincular'}
+              </button>
+            </>
+          }
+        >
+          <p>
+            ¿Seguro que querés desvincular a <strong>{paciente.nombre}</strong>? Vas a dejar de ver su
+            información clínica hasta que lo vuelvas a conectar con su DNI y PIN.
+          </p>
+          {errorDesvinculo && <div className="auth-alert error">{errorDesvinculo}</div>}
+        </Modal>
       )}
     </div>
   )

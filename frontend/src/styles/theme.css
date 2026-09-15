@@ -726,6 +726,37 @@ section.block {
   flex-wrap: wrap;
 }
 
+.detail-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+
+.btn-icon-pink {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--pink);
+  color: #fff;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.btn-icon-pink:hover {
+  transform: translateY(-1px);
+}
+
+.icon-16 {
+  width: 16px;
+  height: 16px;
+}
+
 .tabs {
   display: flex;
   gap: 4px;
