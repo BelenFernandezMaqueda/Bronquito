@@ -30,6 +30,14 @@ export function RegistroPacientePage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
+    if (!/^\d+$/.test(dni)) {
+      setError('El DNI solo puede contener números.')
+      return
+    }
+    if (!/^\d{7,8}$/.test(dni)) {
+      setError('El DNI debe tener entre 7 y 8 dígitos.')
+      return
+    }
     if (!/^\d{4}$/.test(pin)) {
       setError('El PIN tiene que ser de 4 dígitos.')
       return
