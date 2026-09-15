@@ -14,7 +14,9 @@ Pacientes de prueba (dni / pin):
                                           pantalla "completá tu perfil"
 """
 
-from datetime import date, datetime, timezone
+import csv
+from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 
 from sqlalchemy.orm import Session
 
@@ -27,6 +29,22 @@ from app.models.medico_paciente import MedicoPaciente
 from app.models.nota_medica import NotaMedica
 from app.models.paciente import Paciente
 from app.models.rutina import Rutina
+
+# Curva real de espirometría (sujeto 102, visita 2, ensayos 1 y 2) tomada de
+# un dataset de referencia, para tener muestras de gráfico realistas en vez
+# de 4 puntos inventados.
+RUTA_ESPIROMETRIA_102 = Path(__file__).resolve().parent / "seed_data" / "espirometria_102_visita2.csv"
+
+
+def _muestras_espirometria_102(ensayo: int):
+    """Muestras (tiempo_seg, flujo, volumen) del ensayo indicado, ordenadas por tiempo."""
+    with RUTA_ESPIROMETRIA_102.open(newline="") as archivo:
+        muestras = [
+            (float(fila["Time"]) / 1000, float(fila["Flow"]), float(fila["Volume"]))
+            for fila in csv.DictReader(archivo)
+            if int(fila["Trial"]) == ensayo
+        ]
+    return sorted(muestras)
 
 
 def seed_if_empty(db: Session) -> None:
@@ -103,25 +121,38 @@ def seed_if_empty(db: Session) -> None:
         for p in pacientes
     )
 
-    evaluacion = Evaluacion(
-        id_paciente=malena.id_paciente,
-        tipo=TipoEvaluacion.espirometria,
-        fecha_hora=datetime(2026, 8, 29, 15, 0, tzinfo=timezone.utc),
-        fvc=4.25, fev1=3.60, pef=420.0, fivc=4.10, fiv1=3.45,
-        temperatura=23.5, humedad=55.0,
-    )
-    db.add(evaluacion)
-    db.flush()
+    # Dos evaluaciones de Malena con la curva real del sujeto 102 (visita 2,
+    # ensayos 1 y 2), como si fueran dos visitas distintas: una de hoy y otra de
+    # antes de ayer. Es espirometría (válvulas abiertas), así que no hay presión
+    # medida y queda en 0 para todas sus muestras.
+    hoy = datetime.now(timezone.utc).replace(hour=10, minute=15, second=0, microsecond=0)
+    anteayer = hoy - timedelta(days=2)
 
-    db.add_all(
-        EvaluacionMuestra(id_evaluacion=evaluacion.id_evaluacion, tiempo=t, flujo=f, presion=p, volumen=v)
-        for t, f, p, v in [
-            (0.0, 0.1, 2.0, 0.0),
-            (0.5, 3.2, 8.5, 1.1),
-            (1.0, 2.1, 5.0, 2.4),
-            (1.5, 0.6, 1.5, 3.1),
-        ]
-    )
+    for ensayo, fecha_hora, (fvc, fev1, pef, fivc, fiv1, temperatura, humedad) in [
+        (1, hoy, (4.15, 3.52, 445.0, 4.05, 3.40, 23.0, 53.0)),
+        (2, anteayer, (4.08, 3.45, 430.0, 3.95, 3.30, 22.5, 50.0)),
+    ]:
+        evaluacion_102 = Evaluacion(
+            id_paciente=malena.id_paciente,
+            tipo=TipoEvaluacion.espirometria,
+            fecha_hora=fecha_hora,
+            fvc=fvc, fev1=fev1, pef=pef, fivc=fivc, fiv1=fiv1,
+            temperatura=temperatura, humedad=humedad,
+        )
+        db.add(evaluacion_102)
+        db.flush()
+
+        muestras = _muestras_espirometria_102(ensayo)
+        tiempos, flujos, volumenes = zip(*muestras)
+        db.add(
+            EvaluacionMuestra(
+                id_evaluacion=evaluacion_102.id_evaluacion,
+                tiempo=list(tiempos),
+                flujo=list(flujos),
+                presion=[0.0] * len(muestras),
+                volumen=list(volumenes),
+            )
+        )
 
     entrenamiento = Entrenamiento(
         id_paciente=malena.id_paciente,

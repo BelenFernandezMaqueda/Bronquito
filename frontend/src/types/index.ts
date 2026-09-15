@@ -12,8 +12,6 @@ export type Role = 'paciente' | 'medico'
 
 export type Adherencia = 'buena' | 'irregular' | 'sin_actividad'
 
-export type EstadoInvitacion = 'pendiente' | 'aceptada' | 'rechazada'
-
 export type EstadoSesion = 'completa' | 'parcial' | 'no_realizada'
 
 export type TipoSesion = 'entrenamiento' | 'calibracion'
@@ -31,6 +29,8 @@ export interface Paciente extends UsuarioBase {
   edad: number
   diagnostico: string
   fechaNacimiento?: string
+  /** No todos los pacientes mock lo tienen cargado; los que vienen de la API sí. */
+  dni?: string
   /** Nivel de resistencia actual del dispositivo (escala del equipo, ej. 1-8). */
   resistenciaActual: number
   /** Frecuencia de entrenamiento recomendada, en sesiones por semana. */
@@ -43,19 +43,6 @@ export interface Medico extends UsuarioBase {
   rol: 'medico'
   matricula: string
   especialidad: string
-}
-
-/**
- * Relación médico-paciente. No todos los médicos ven a todos los pacientes:
- * el vínculo se crea a partir de una invitación que el paciente debe aceptar.
- */
-export interface VinculoMedicoPaciente {
-  id: string
-  medicoId: string
-  pacienteId: string
-  estado: EstadoInvitacion
-  fechaInvitacion: string
-  fechaAceptacion?: string
 }
 
 /** Una sesión de calibración: mide PIM (presión inspiratoria máxima) y curva flujo-volumen. */

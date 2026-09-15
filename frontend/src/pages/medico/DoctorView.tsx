@@ -1,39 +1,131 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PatientListPanel } from './PatientListPanel'
 import { PatientDetail } from './PatientDetail'
-import { InvitePatientModal } from './InvitePatientModal'
-import { pacientesDeMedico, medicoActualId } from '../../data/mockData'
+import { ConnectPatientModal } from './ConnectPatientModal'
+import { useSession } from '../../auth/session'
+import { ApiError, api } from '../../api/client'
+import type { PacientePerfil } from '../../api/types'
+import type { Paciente } from '../../types'
+
+function edadDesdeNacimiento(fechaIso: string): number {
+  const nacimiento = new Date(fechaIso)
+  const hoy = new Date()
+  let edad = hoy.getFullYear() - nacimiento.getFullYear()
+  const noCumplioAun =
+    hoy.getMonth() < nacimiento.getMonth() ||
+    (hoy.getMonth() === nacimiento.getMonth() && hoy.getDate() < nacimiento.getDate())
+  if (noCumplioAun) edad -= 1
+  return edad
+}
+
+function inicialesDe(nombre: string | null, apellido: string | null, dni: string): string {
+  const letras = `${nombre?.[0] ?? ''}${apellido?.[0] ?? ''}`.toUpperCase()
+  return letras || dni.slice(0, 2)
+}
+
+/**
+ * Adapta el perfil que devuelve la API al shape de `Paciente` que todavía
+ * usan PatientListPanel/PatientDetail (heredado de los mocks). Los campos
+ * clínicos que el backend todavía no expone (diagnóstico, PIM, resistencia,
+ * frecuencia) quedan en placeholder hasta que haya un endpoint real para eso.
+ */
+function pacienteDesdeApi(p: PacientePerfil): Paciente {
+  return {
+    id: String(p.id_paciente),
+    nombre: `${p.nombre ?? ''} ${p.apellido ?? ''}`.trim() || `DNI ${p.dni}`,
+    dni: p.dni,
+    email: p.email ?? '',
+    avatarIniciales: inicialesDe(p.nombre, p.apellido, p.dni),
+    rol: 'paciente',
+    edad: edadDesdeNacimiento(p.fecha_nacimiento),
+    diagnostico: '',
+    fechaNacimiento: p.fecha_nacimiento,
+    resistenciaActual: 0,
+    frecuenciaSemanal: 0,
+    pimInicial: 0,
+    pimActual: 0,
+  }
+}
 
 export function DoctorView() {
-  const misPacientes = pacientesDeMedico(medicoActualId)
-  const [seleccionadoId, setSeleccionadoId] = useState<string | null>(misPacientes[0]?.id ?? null)
-  const [mostrarInvitar, setMostrarInvitar] = useState(false)
+  const { token } = useSession()
+  const [pacientes, setPacientes] = useState<Paciente[]>([])
+  const [cargando, setCargando] = useState(true)
+  const [error, setError] = useState('')
+  const [seleccionadoId, setSeleccionadoId] = useState<string | null>(null)
+  const [mostrarConectar, setMostrarConectar] = useState(false)
 
-  const pacienteSeleccionado = misPacientes.find((p) => p.id === seleccionadoId) ?? null
+  useEffect(() => {
+    if (!token) return
+    let cancelado = false
+
+    api.medico
+      .misPacientes(token)
+      .then((datos) => {
+        if (cancelado) return
+        const adaptados = datos.map(pacienteDesdeApi)
+        setPacientes(adaptados)
+        setSeleccionadoId((actual) => actual ?? adaptados[0]?.id ?? null)
+      })
+      .catch((err) => {
+        if (cancelado) return
+        setError(err instanceof ApiError ? err.message : 'No pudimos cargar tus pacientes.')
+      })
+      .finally(() => {
+        if (!cancelado) setCargando(false)
+      })
+
+    return () => {
+      cancelado = true
+    }
+  }, [token])
+
+  const pacienteSeleccionado = pacientes.find((p) => p.id === seleccionadoId) ?? null
 
   return (
     <div id="contenido-principal" className="doctor-layout">
       <PatientListPanel
-        pacientes={misPacientes}
+        pacientes={pacientes}
         pacienteSeleccionadoId={seleccionadoId}
         onSeleccionar={setSeleccionadoId}
-        onInvitar={() => setMostrarInvitar(true)}
+        onConectar={() => setMostrarConectar(true)}
       />
 
-      {pacienteSeleccionado ? (
-        <PatientDetail paciente={pacienteSeleccionado} />
+      {cargando ? (
+        <div className="card">
+          <p className="empty-state">Cargando pacientes…</p>
+        </div>
+      ) : error ? (
+        <div className="card">
+          <p className="empty-state">{error}</p>
+        </div>
+      ) : pacienteSeleccionado ? (
+        <PatientDetail
+          paciente={pacienteSeleccionado}
+          onDesvincular={async () => {
+            await api.medico.desvincularPaciente(token!, Number(pacienteSeleccionado.id))
+            setPacientes((actuales) => actuales.filter((p) => p.id !== pacienteSeleccionado.id))
+            setSeleccionadoId(null)
+          }}
+        />
       ) : (
         <div className="card">
           <p className="empty-state">
-            {misPacientes.length === 0
-              ? 'Todavía no tenés pacientes vinculados. Invitá al primero con el botón "＋ Invitar paciente".'
+            {pacientes.length === 0
+              ? 'Todavía no tenés pacientes vinculados. Conectá al primero con el botón "＋ Conectar paciente".'
               : 'Seleccioná un paciente de la lista para ver su detalle.'}
           </p>
         </div>
       )}
 
-      {mostrarInvitar && (
-        <InvitePatientModal onClose={() => setMostrarInvitar(false)} onEnviar={() => {}} />
+      {mostrarConectar && (
+        <ConnectPatientModal
+          onClose={() => setMostrarConectar(false)}
+          onConectado={(nuevo) => {
+            setPacientes((actuales) => [...actuales, pacienteDesdeApi(nuevo)])
+            setSeleccionadoId(String(nuevo.id_paciente))
+          }}
+        />
       )}
     </div>
   )

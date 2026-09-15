@@ -15,3 +15,4 @@ class MedicoPerfilOut(BaseModel):
 
 class VincularPacienteRequest(BaseModel):
     dni: str
+    pin: str

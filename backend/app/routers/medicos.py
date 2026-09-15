@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_medico
+from app.core.security import verificar_secreto
 from app.models.medico import Medico
 from app.models.medico_paciente import MedicoPaciente
 from app.models.paciente import Paciente
@@ -42,13 +43,17 @@ def vincular_paciente(
     db: Session = Depends(get_db),
 ):
     """
-    Vinculación DIRECTA por DNI: se busca al paciente, y si existe se crea
-    la fila en medico_paciente al toque (sin pedirle confirmación al
-    paciente — así lo definiste para esta versión).
+    Vinculación por DNI + PIN: el médico tiene que saber las credenciales del
+    paciente (se las pasa el paciente en persona), no alcanza con el DNI.
+    Si coinciden, se crea la fila en medico_paciente al toque (sin pedirle
+    confirmación al paciente — así lo definiste para esta versión).
     """
     paciente = db.query(Paciente).filter(Paciente.dni == payload.dni).first()
     if paciente is None:
         raise HTTPException(status_code=404, detail="No existe ningún paciente con ese DNI.")
+
+    if not verificar_secreto(payload.pin, paciente.pin_hash):
+        raise HTTPException(status_code=401, detail="PIN incorrecto.")
 
     ya_vinculado = (
         db.query(MedicoPaciente)
@@ -67,3 +72,22 @@ def vincular_paciente(
     db.commit()
 
     return paciente
+
+
+@router.delete("/me/pacientes/{id_paciente}", status_code=204)
+def desvincular_paciente(
+    id_paciente: int,
+    medico: Medico = Depends(get_current_medico),
+    db: Session = Depends(get_db),
+):
+    """Saca al paciente de la lista de ESTE médico. No borra al paciente, solo el vínculo."""
+    vinculo = (
+        db.query(MedicoPaciente)
+        .filter(MedicoPaciente.id_medico == medico.id_medico, MedicoPaciente.id_paciente == id_paciente)
+        .first()
+    )
+    if vinculo is None:
+        raise HTTPException(status_code=404, detail="No tenés a ese paciente vinculado.")
+
+    db.delete(vinculo)
+    db.commit()
