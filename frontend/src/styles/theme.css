@@ -733,12 +733,6 @@ section.block {
   border-radius: 999px;
 }
 
-.detail-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
 .btn-icon-pink {
   width: 30px;
   height: 30px;
@@ -764,6 +758,15 @@ section.block {
   height: 16px;
 }
 
+.tabs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
 .tabs {
   display: flex;
   gap: 4px;
@@ -771,7 +774,6 @@ section.block {
   border-radius: 999px;
   padding: 4px;
   width: fit-content;
-  margin-bottom: 18px;
   max-width: 100%;
   overflow-x: auto;
 }

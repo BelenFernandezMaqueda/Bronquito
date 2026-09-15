@@ -7,7 +7,6 @@ import { useSession } from '../../auth/session'
 import { EstadoSesionBadge } from '../../components/ui/Badge'
 import { PimTrendChart } from '../../components/ui/PimTrendChart'
 import { MonthCalendar } from '../../components/ui/MonthCalendar'
-import { DeviceSessionModal } from '../../components/ui/DeviceSessionModal'
 import { Modal } from '../../components/ui/Modal'
 import { TrashIcon } from '../../components/ui/TrashIcon'
 import { FrequencyModal } from './FrequencyModal'
@@ -26,7 +25,6 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
   const [tab, setTab] = useState<Tab>('evaluaciones')
   const [frecuencia, setFrecuencia] = useState(paciente.frecuenciaSemanal)
   const [modalFrecuencia, setModalFrecuencia] = useState(false)
-  const [sesionConsultorio, setSesionConsultorio] = useState<'entrenamiento' | 'calibracion' | null>(null)
   const [confirmarDesvinculo, setConfirmarDesvinculo] = useState(false)
   const [desvinculando, setDesvinculando] = useState(false)
   const [errorDesvinculo, setErrorDesvinculo] = useState<string | null>(null)
@@ -128,28 +126,22 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
             <span className="tag">Frecuencia: {frecuencia}x/semana</span>
           </div>
         </div>
-        <div className="detail-actions">
-          <button className="btn btn-outline" onClick={() => setModalFrecuencia(true)}>
-            Modificar frecuencia
-          </button>
-          <button className="btn btn-outline" onClick={() => setSesionConsultorio('calibracion')}>
-            Calibración en consultorio
-          </button>
-          <button className="btn btn-teal" onClick={() => setSesionConsultorio('entrenamiento')}>
-            Entrenamiento en consultorio
-          </button>
-        </div>
       </div>
 
-      <div className="tabs" role="tablist" aria-label="Detalle clínico del paciente">
-        <button className={`tab ${tab === 'evaluaciones' ? 'active' : ''}`} role="tab" aria-selected={tab === 'evaluaciones'} onClick={() => setTab('evaluaciones')}>
-          Evaluaciones
-        </button>
-        <button className={`tab ${tab === 'entrenamiento' ? 'active' : ''}`} role="tab" aria-selected={tab === 'entrenamiento'} onClick={() => setTab('entrenamiento')}>
-          Entrenamiento
-        </button>
-        <button className={`tab ${tab === 'calendario' ? 'active' : ''}`} role="tab" aria-selected={tab === 'calendario'} onClick={() => setTab('calendario')}>
-          Calendario
+      <div className="tabs-row">
+        <div className="tabs" role="tablist" aria-label="Detalle clínico del paciente">
+          <button className={`tab ${tab === 'evaluaciones' ? 'active' : ''}`} role="tab" aria-selected={tab === 'evaluaciones'} onClick={() => setTab('evaluaciones')}>
+            Evaluaciones
+          </button>
+          <button className={`tab ${tab === 'entrenamiento' ? 'active' : ''}`} role="tab" aria-selected={tab === 'entrenamiento'} onClick={() => setTab('entrenamiento')}>
+            Entrenamiento
+          </button>
+          <button className={`tab ${tab === 'calendario' ? 'active' : ''}`} role="tab" aria-selected={tab === 'calendario'} onClick={() => setTab('calendario')}>
+            Calendario
+          </button>
+        </div>
+        <button className="btn btn-outline btn-sm" onClick={() => setModalFrecuencia(true)}>
+          Modificar frecuencia
         </button>
       </div>
 
@@ -313,14 +305,6 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
           nombrePaciente={paciente.nombre}
           onClose={() => setModalFrecuencia(false)}
           onGuardar={setFrecuencia}
-        />
-      )}
-
-      {sesionConsultorio && (
-        <DeviceSessionModal
-          tipo={sesionConsultorio}
-          nombrePaciente={paciente.nombre}
-          onClose={() => setSesionConsultorio(null)}
         />
       )}
 
