@@ -332,6 +332,11 @@ main {
   color: #fff;
 }
 
+.btn-red {
+  background: var(--bad);
+  color: #fff;
+}
+
 .btn-ghost {
   background: rgba(255, 255, 255, 0.2);
   color: #fff;
@@ -817,6 +822,81 @@ td {
 
 tr:last-child td {
   border-bottom: none;
+}
+
+.table-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.signal-page-bg {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #ddf6fb, #b9e9f2);
+}
+
+.signal-grid {
+  grid-template-rows: repeat(2, 1fr);
+  overflow: hidden;
+}
+
+.signal-grid-rows-1 {
+  grid-template-rows: 1fr;
+}
+
+.signal-grid .chart-wrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: #fff;
+  padding: 10px 12px 4px;
+}
+
+.signal-grid .chart-wrap svg {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: block;
+}
+
+.signal-chart-title {
+  flex: none;
+  text-align: center;
+  font-family: 'Baloo 2';
+  font-weight: 800;
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.signal-viewer-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.signal-viewer-header h3 {
+  margin: 0 0 0 4px;
+  font-size: 16px;
+}
+
+.signal-tipo-toggle {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 800;
+  color: var(--teal-deep);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.signal-tipo-toggle:hover {
+  color: var(--pink-deep);
 }
 
 .chart-wrap {

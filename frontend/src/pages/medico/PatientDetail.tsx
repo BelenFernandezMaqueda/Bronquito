@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { Paciente } from '../../types'
 import type { Evaluacion } from '../../api/types'
 import { ApiError, api } from '../../api/client'
@@ -21,6 +22,7 @@ interface PatientDetailProps {
 
 export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
   const { token } = useSession()
+  const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('evaluaciones')
   const [frecuencia, setFrecuencia] = useState(paciente.frecuenciaSemanal)
   const [modalFrecuencia, setModalFrecuencia] = useState(false)
@@ -65,6 +67,20 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
       cancelado = true
     }
   }, [token, paciente.id])
+
+  // Dos evaluaciones son la misma sesión de consultorio si comparten el
+  // `fecha_hora` exacto (se captura una sola vez al arrancar la sesión) —
+  // se agrupan en una sola fila de la tabla.
+  const sesiones = useMemo(() => {
+    const porFecha = new Map<string, { fecha_hora: string; espirometria?: Evaluacion; pim?: Evaluacion }>()
+    for (const e of evaluaciones) {
+      const sesion = porFecha.get(e.fecha_hora) ?? { fecha_hora: e.fecha_hora }
+      if (e.tipo === 'ESPIROMETRIA') sesion.espirometria = e
+      else sesion.pim = e
+      porFecha.set(e.fecha_hora, sesion)
+    }
+    return [...porFecha.values()]
+  }, [evaluaciones])
 
   const ultimaEvaluacion = evaluaciones[0]
   const entrenamientos = entrenamientosDe(paciente.id)
@@ -185,15 +201,46 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
                         <th>FVC (L)</th>
                         <th>FEV1 (L)</th>
                         <th>PEF (L/min)</th>
+                        <th>FIVC (L)</th>
+                        <th>FIV1 (L)</th>
+                        <th>PIM (cmH₂O)</th>
+                        <th>Señales</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {evaluaciones.map((e) => (
-                        <tr key={e.id_evaluacion}>
-                          <td>{formatearFecha(e.fecha_hora)}</td>
-                          <td>{e.fvc ?? '—'}</td>
-                          <td>{e.fev1 ?? '—'}</td>
-                          <td>{e.pef ?? '—'}</td>
+                      {sesiones.map((sesion) => (
+                        <tr key={sesion.fecha_hora}>
+                          <td>{formatearFecha(sesion.fecha_hora)}</td>
+                          <td>{sesion.espirometria?.fvc ?? '—'}</td>
+                          <td>{sesion.espirometria?.fev1 ?? '—'}</td>
+                          <td>{sesion.espirometria?.pef ?? '—'}</td>
+                          <td>{sesion.espirometria?.fivc ?? '—'}</td>
+                          <td>{sesion.espirometria?.fiv1 ?? '—'}</td>
+                          <td>{sesion.pim?.pim ?? '—'}</td>
+                          <td>
+                            <div className="table-actions">
+                              {sesion.espirometria && (
+                                <button
+                                  className="btn btn-outline btn-sm"
+                                  onClick={() =>
+                                    navigate(`/medico/pacientes/${paciente.id}/evaluaciones/${sesion.espirometria!.id_evaluacion}`)
+                                  }
+                                >
+                                  {sesion.pim ? 'Espirometría' : 'Inspeccionar'}
+                                </button>
+                              )}
+                              {sesion.pim && (
+                                <button
+                                  className="btn btn-outline btn-sm"
+                                  onClick={() =>
+                                    navigate(`/medico/pacientes/${paciente.id}/evaluaciones/${sesion.pim!.id_evaluacion}`)
+                                  }
+                                >
+                                  {sesion.espirometria ? 'PIM' : 'Inspeccionar'}
+                                </button>
+                              )}
+                            </div>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
