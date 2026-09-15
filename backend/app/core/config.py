@@ -31,17 +31,15 @@ class Settings(BaseSettings):
     reset_token_expire_minutes: int = 30
 
     # --- Envío de mails -------------------------------------------------------
-    # Por defecto apunta a Mailpit (servicio del docker-compose): un servidor
-    # SMTP falso que atrapa los mails SIN mandarlos y los muestra en
-    # http://localhost:8025. Para mandar mails de verdad (Gmail u otro
-    # proveedor), se cambian estos valores en el .env — ver .env.example.
-    smtp_host: str = "mailpit"
-    smtp_port: int = 1025
+    # Se manda por Gmail con una cuenta dedicada al proyecto (App Password).
+    # Completá SMTP_USER/SMTP_PASSWORD/EMAIL_FROM en el .env — ver .env.example.
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
     smtp_user: str = ""
     smtp_password: str = ""
-    # STARTTLS = puerto 587 (Gmail). SSL directo = puerto 465. Ninguno de los
-    # dos = sin cifrar (Mailpit en dev). Poné como mucho uno en True.
-    smtp_starttls: bool = False
+    # STARTTLS = puerto 587 (Gmail). SSL directo = puerto 465. Poné como
+    # mucho uno en True.
+    smtp_starttls: bool = True
     smtp_ssl: bool = False
     # Remitente que ve el destinatario. Con Gmail tiene que ser la misma
     # cuenta autenticada (o un alias verificado de esa cuenta).

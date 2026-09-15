@@ -7,9 +7,8 @@ Se va a usar para:
     un mail real)
 
 Usa `smtplib` de la librería estándar — no hace falta ninguna dependencia
-extra. En desarrollo apunta a Mailpit (ver `docker-compose.yml`), que atrapa
-los mails sin mandarlos y los muestra en http://localhost:8025. Para mandar
-mails de verdad, se configura un SMTP real en el `.env` (ver `.env.example`).
+extra. Manda por Gmail con una cuenta dedicada al proyecto; se configura con
+las variables `SMTP_*` del `.env` (ver `.env.example`).
 
 `enviar_email` está pensada para llamarse desde un `BackgroundTasks` de
 FastAPI, para que la respuesta HTTP no espere a que termine el SMTP:
@@ -105,7 +104,6 @@ def enviar_email(
 
 
 def _autenticar_y_mandar(servidor: smtplib.SMTP, mensaje: EmailMessage) -> None:
-    # Mailpit no pide auth (smtp_user vacío). Gmail y los proveedores reales sí.
     if settings.smtp_user:
         servidor.login(settings.smtp_user, settings.smtp_password)
     servidor.send_message(mensaje)

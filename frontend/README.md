@@ -110,8 +110,8 @@ src/
   términos), el guard de rutas lo manda a `/completar-perfil` y no lo deja entrar al
   dashboard hasta que lo complete. `CompletarPerfilPage` sólo muestra los campos que faltan.
 - **El link de reseteo llega por mail.** `RecuperarPage` sólo confirma "revisá tu casilla";
-  el backend manda el mail con el link a `/resetear/{pin,contrasena}?token=...`. En
-  desarrollo el mail cae en Mailpit (http://localhost:8025); en prod, a la casilla real.
+  el backend manda el mail con el link a `/resetear/{pin,contrasena}?token=...` por Gmail
+  (ver `backend/README.md`, sección "Mails").
 - **Datos mock centralizados en `mockData.ts`.** Todas las pantallas leen de ahí a través
   de funciones (`pacientesDeMedico`, `calibracionesDe`, `resumenProgresoDe`, etc.) en vez
   de tener los datos hardcodeados en cada componente. Esas funciones son el punto exacto

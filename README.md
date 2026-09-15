@@ -25,9 +25,6 @@ docker compose up --build
 Después abrí:
 - http://localhost:5173 — la web
 - http://localhost:8000/docs — la API (documentación interactiva)
-- http://localhost:8025 — Mailpit: acá aparecen los mails que manda el backend
-  (verificación, recuperar contraseña). En dev no se envía nada de verdad; ver
-  `backend/README.md`.
 
 Guía detallada, con capturas de qué esperar y solución de problemas comunes, en
 `DOCKER.md`.

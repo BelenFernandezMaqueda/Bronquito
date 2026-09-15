@@ -29,8 +29,7 @@ app/
     security.py          Hashing de contraseñas/PIN (bcrypt) + creación/lectura de
                         tokens de sesión (JWT). Acá vive toda la lógica de "probar
                         quién sos".
-    email.py             Envío de mails (smtplib). En dev van a Mailpit; en prod, a
-                        un SMTP real. Ver sección "Mails" abajo.
+    email.py             Envío de mails (smtplib), por Gmail. Ver sección "Mails" abajo.
     email_templates.py   El HTML de los mails, con la estética de la web (patito,
                         colores teal, botón pill). Tablas + estilos inline.
     deps.py               Dependencias de FastAPI (`get_current_medico`,
@@ -175,17 +174,14 @@ uvicorn app.main:app --reload
 ## Mails
 
 `app/core/email.py` manda los mails (verificación de dirección, recuperar contraseña/PIN)
-con `smtplib` — sin dependencias extra. Adónde los manda depende de las variables `SMTP_*`
-del `.env` (ver `../.env.example`):
+con `smtplib` — sin dependencias extra. Se manda por Gmail con una cuenta dedicada al
+proyecto, configurada con las variables `SMTP_*` del `.env` (ver `../.env.example`):
 
-- **Desarrollo (default):** van a **Mailpit**, un servidor SMTP falso que corre como un
-  servicio más del `docker-compose`. No sale nada a direcciones reales: los ves en
-  **http://localhost:8025**. No hay que configurar nada.
-- **Mails reales:** completás `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` /
-  `SMTP_STARTTLS` / `EMAIL_FROM` en el `.env` con los datos de un proveedor (Gmail con una
-  "App Password", o Resend/Brevo/SES). El `.env.example` trae el bloque de Gmail listo para
-  descomentar.
-- `EMAIL_ENABLED=false` apaga el envío: `enviar_email` sólo loguea lo que hubiera mandado.
+- Completás `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASSWORD` / `SMTP_STARTTLS` /
+  `EMAIL_FROM` en el `.env` con los datos de la cuenta de Gmail (usuario + "App Password").
+  El `.env.example` trae la guía paso a paso.
+- `EMAIL_ENABLED=false` apaga el envío: `enviar_email` sólo loguea lo que hubiera mandado
+  (útil para no gastar la cuenta real mientras probás cosas que no dependen del mail).
 
 `enviar_email` está pensada para llamarse desde un `BackgroundTasks` de FastAPI, así la
 respuesta HTTP no espera al SMTP. Si el envío falla, queda en los logs y no rompe el
@@ -194,15 +190,13 @@ patito viaja embebido en el mail como imagen inline, no depende de un servidor e
 
 **Ya enchufado:** "olvidé mi contraseña / PIN" manda un mail real con el link
 `FRONTEND_URL/resetear/{contrasena,pin}?token=...`. La respuesta HTTP ya no devuelve el
-token (antes había un `reset_token_dev` de dev — se eliminó). En desarrollo, el mail cae en
-Mailpit: http://localhost:8025.
+token (antes había un `reset_token_dev` de dev — se eliminó).
 
 Probar el envío a mano (con el stack levantado):
 
 ```bash
 docker compose exec api python -c "from app.core.email import enviar_email; \
 enviar_email(destinatario='test@x.com', asunto='Prueba', html='<p>Hola</p>')"
-# abrí http://localhost:8025 y fijate que llegó
 ```
 
 ## Decisiones a propósito (para que no parezcan olvidos)
