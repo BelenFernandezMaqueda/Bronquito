@@ -4,6 +4,8 @@
  */
 
 import type {
+  Evaluacion,
+  EvaluacionMuestras,
   MedicoLoginBody,
   MedicoPerfil,
   MedicoRegistroBody,
@@ -103,6 +105,13 @@ export const api = {
       apiFetch<PacientePerfil>('/medicos/me/vincular', { method: 'POST', body: { dni, pin }, token }),
     desvincularPaciente: (token: string, idPaciente: number) =>
       apiFetch<void>(`/medicos/me/pacientes/${idPaciente}`, { method: 'DELETE', token }),
+    evaluacionesDe: (token: string, idPaciente: number) =>
+      apiFetch<Evaluacion[]>(`/medicos/me/pacientes/${idPaciente}/evaluaciones`, { token }),
+    muestrasDeEvaluacion: (token: string, idPaciente: number, idEvaluacion: number) =>
+      apiFetch<EvaluacionMuestras>(
+        `/medicos/me/pacientes/${idPaciente}/evaluaciones/${idEvaluacion}/muestras`,
+        { token },
+      ),
   },
 
   paciente: {

@@ -43,6 +43,29 @@ export interface PacientePerfil {
   perfil_completo: boolean
 }
 
+export type TipoEvaluacion = 'ESPIROMETRIA' | 'PIM_PEM'
+
+export interface Evaluacion {
+  id_evaluacion: number
+  tipo: TipoEvaluacion
+  fecha_hora: string
+  fvc: number | null
+  fev1: number | null
+  pef: number | null
+  fivc: number | null
+  fiv1: number | null
+  pim: number | null
+  temperatura: number | null
+  humedad: number | null
+}
+
+export interface EvaluacionMuestras {
+  tiempo: number[]
+  flujo: number[]
+  presion: number[]
+  volumen: number[]
+}
+
 // --- Request bodies -------------------------------------------------------
 
 export interface MedicoLoginBody {

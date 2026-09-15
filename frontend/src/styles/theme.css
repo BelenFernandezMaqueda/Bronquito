@@ -243,7 +243,7 @@ textarea:focus-visible,
 
 /* ---------- Layout ---------- */
 main {
-  max-width: 1180px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 28px 32px 60px;
 }
@@ -265,7 +265,7 @@ main {
 }
 
 .cols-2 {
-  grid-template-columns: 1.3fr 1fr;
+  grid-template-columns: 1fr 1fr;
 }
 
 /* ---------- Hero ---------- */
@@ -695,8 +695,16 @@ section.block {
   flex-wrap: wrap;
 }
 
-.detail-id h2 {
-  margin: 0 0 4px;
+.detail-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.detail-title-row h2 {
+  margin: 0;
   font-size: 22px;
 }
 
@@ -724,12 +732,6 @@ section.block {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-}
-
-.detail-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 4px;
 }
 
 .btn-icon-pink {

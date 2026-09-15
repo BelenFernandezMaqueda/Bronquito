@@ -1,22 +1,18 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Paciente } from '../../types'
+import type { Evaluacion } from '../../api/types'
+import { ApiError, api } from '../../api/client'
+import { useSession } from '../../auth/session'
 import { EstadoSesionBadge } from '../../components/ui/Badge'
-import { FlowVolumeChart } from '../../components/ui/FlowVolumeChart'
 import { PimTrendChart } from '../../components/ui/PimTrendChart'
 import { MonthCalendar } from '../../components/ui/MonthCalendar'
 import { DeviceSessionModal } from '../../components/ui/DeviceSessionModal'
 import { Modal } from '../../components/ui/Modal'
 import { TrashIcon } from '../../components/ui/TrashIcon'
 import { FrequencyModal } from './FrequencyModal'
-import {
-  calibracionesDe,
-  entrenamientosDe,
-  formatearFecha,
-  formatearDuracion,
-  HOY,
-} from '../../data/mockData'
+import { entrenamientosDe, formatearFecha, formatearDuracion, HOY } from '../../data/mockData'
 
-type Tab = 'calibraciones' | 'entrenamiento' | 'calendario'
+type Tab = 'evaluaciones' | 'entrenamiento' | 'calendario'
 
 interface PatientDetailProps {
   paciente: Paciente
@@ -24,7 +20,8 @@ interface PatientDetailProps {
 }
 
 export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
-  const [tab, setTab] = useState<Tab>('calibraciones')
+  const { token } = useSession()
+  const [tab, setTab] = useState<Tab>('evaluaciones')
   const [frecuencia, setFrecuencia] = useState(paciente.frecuenciaSemanal)
   const [modalFrecuencia, setModalFrecuencia] = useState(false)
   const [sesionConsultorio, setSesionConsultorio] = useState<'entrenamiento' | 'calibracion' | null>(null)
@@ -43,20 +40,56 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
     }
   }
 
-  const calibraciones = calibracionesDe(paciente.id)
+  const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([])
+  const [cargandoEvaluaciones, setCargandoEvaluaciones] = useState(true)
+  const [errorEvaluaciones, setErrorEvaluaciones] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!token) return
+    let cancelado = false
+    setCargandoEvaluaciones(true)
+    setErrorEvaluaciones(null)
+    api.medico
+      .evaluacionesDe(token, Number(paciente.id))
+      .then((datos) => {
+        if (!cancelado) setEvaluaciones(datos)
+      })
+      .catch((err) => {
+        if (cancelado) return
+        setErrorEvaluaciones(err instanceof ApiError ? err.message : 'No pudimos cargar las evaluaciones.')
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoEvaluaciones(false)
+      })
+    return () => {
+      cancelado = true
+    }
+  }, [token, paciente.id])
+
+  const ultimaEvaluacion = evaluaciones[0]
   const entrenamientos = entrenamientosDe(paciente.id)
 
   const fechasConSesion = useMemo(
-    () => new Set([...entrenamientos, ...calibraciones].map((s) => s.fecha)),
-    [entrenamientos, calibraciones],
+    () =>
+      new Set([
+        ...entrenamientos.map((e) => e.fecha),
+        ...evaluaciones.map((e) => e.fecha_hora.slice(0, 10)),
+      ]),
+    [entrenamientos, evaluaciones],
   )
 
-  const ultimaCalibracion = calibraciones[0]
-  const calibracionesCronologicas = [...calibraciones].reverse()
+  const evaluacionesCronologicas = [...evaluaciones].reverse()
+  const seriePim = evaluacionesCronologicas
+    .filter((e): e is Evaluacion & { pim: number } => e.pim != null)
+    .map((e) => ({ valor: e.pim, fecha: formatearFecha(e.fecha_hora) }))
+  const serieFvc = evaluacionesCronologicas
+    .filter((e): e is Evaluacion & { fvc: number } => e.fvc != null)
+    .map((e) => ({ valor: e.fvc, fecha: formatearFecha(e.fecha_hora) }))
 
   return (
     <div className="card">
-      <div className="detail-toolbar">
+      <div className="detail-title-row">
+        <h2>{paciente.nombre}</h2>
         <button
           className="btn-icon btn-icon-pink"
           onClick={() => setConfirmarDesvinculo(true)}
@@ -69,7 +102,6 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
 
       <div className="detail-header">
         <div className="detail-id">
-          <h2>{paciente.nombre}</h2>
           <div className="p-sub">
             {paciente.diagnostico} · {paciente.edad} años · ID #{paciente.id.toUpperCase()}
           </div>
@@ -94,8 +126,8 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
       </div>
 
       <div className="tabs" role="tablist" aria-label="Detalle clínico del paciente">
-        <button className={`tab ${tab === 'calibraciones' ? 'active' : ''}`} role="tab" aria-selected={tab === 'calibraciones'} onClick={() => setTab('calibraciones')}>
-          Calibraciones
+        <button className={`tab ${tab === 'evaluaciones' ? 'active' : ''}`} role="tab" aria-selected={tab === 'evaluaciones'} onClick={() => setTab('evaluaciones')}>
+          Evaluaciones
         </button>
         <button className={`tab ${tab === 'entrenamiento' ? 'active' : ''}`} role="tab" aria-selected={tab === 'entrenamiento'} onClick={() => setTab('entrenamiento')}>
           Entrenamiento
@@ -105,48 +137,70 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
         </button>
       </div>
 
-      {tab === 'calibraciones' && (
+      {tab === 'evaluaciones' && (
         <div role="tabpanel">
-          {ultimaCalibracion ? (
-            <div className="grid cols-2">
-              <FlowVolumeChart
-                puntos={ultimaCalibracion.curvaFlujoVolumen}
-                caption={`Curva flujo–volumen · última calibración (${formatearFecha(ultimaCalibracion.fecha)})`}
-              />
-              <PimTrendChart
-                valores={calibracionesCronologicas.map((c) => c.pim)}
-                caption={`Evolución de PIM: ${calibracionesCronologicas[0]?.pim} → ${ultimaCalibracion.pim} cmH₂O`}
-              />
-            </div>
+          {cargandoEvaluaciones ? (
+            <p className="empty-state">Cargando evaluaciones…</p>
+          ) : errorEvaluaciones ? (
+            <p className="empty-state">{errorEvaluaciones}</p>
           ) : (
-            <p className="empty-state">Todavía no hay calibraciones registradas.</p>
-          )}
+            <>
+              {ultimaEvaluacion ? (
+                <div className="grid cols-2">
+                  {seriePim.length > 0 ? (
+                    <PimTrendChart
+                      valores={seriePim.map((p) => p.valor)}
+                      fechas={seriePim.map((p) => p.fecha)}
+                      etiquetaEje="PIM (cmH₂O)"
+                      caption={`Evolución de PIM: ${seriePim[0].valor} → ${seriePim[seriePim.length - 1].valor} cmH₂O`}
+                    />
+                  ) : (
+                    <div className="chart-wrap">
+                      <p className="empty-state">No hay ningún valor de PIM para graficar.</p>
+                    </div>
+                  )}
+                  {serieFvc.length > 0 ? (
+                    <PimTrendChart
+                      valores={serieFvc.map((p) => p.valor)}
+                      fechas={serieFvc.map((p) => p.fecha)}
+                      etiquetaEje="FVC (L)"
+                      caption={`Evolución de FVC: ${serieFvc[0].valor} → ${serieFvc[serieFvc.length - 1].valor} L`}
+                    />
+                  ) : (
+                    <div className="chart-wrap">
+                      <p className="empty-state">No hay ningún valor de FVC para graficar.</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="empty-state">Todavía no hay evaluaciones registradas.</p>
+              )}
 
-          {calibraciones.length > 0 && (
-            <div className="table-wrap mt-16">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>PIM (cmH₂O)</th>
-                    <th>Volumen (L)</th>
-                    <th>Origen</th>
-                    <th>Observaciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {calibraciones.map((c) => (
-                    <tr key={c.id}>
-                      <td>{formatearFecha(c.fecha)}</td>
-                      <td>{c.pim}</td>
-                      <td>{c.volumen}</td>
-                      <td>{c.enConsultorio ? 'Consultorio' : 'Casa'}</td>
-                      <td>{c.observaciones ?? '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+              {evaluaciones.length > 0 && (
+                <div className="table-wrap mt-16">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>FVC (L)</th>
+                        <th>FEV1 (L)</th>
+                        <th>PEF (L/min)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {evaluaciones.map((e) => (
+                        <tr key={e.id_evaluacion}>
+                          <td>{formatearFecha(e.fecha_hora)}</td>
+                          <td>{e.fvc ?? '—'}</td>
+                          <td>{e.fev1 ?? '—'}</td>
+                          <td>{e.pef ?? '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

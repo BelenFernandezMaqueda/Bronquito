@@ -6,13 +6,26 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_medico
 from app.core.security import verificar_secreto
+from app.models.evaluacion import Evaluacion, EvaluacionMuestra
 from app.models.medico import Medico
 from app.models.medico_paciente import MedicoPaciente
 from app.models.paciente import Paciente
+from app.schemas.evaluacion import EvaluacionMuestraOut, EvaluacionOut
 from app.schemas.medico import MedicoPerfilOut, VincularPacienteRequest
 from app.schemas.paciente import PacientePerfilOut
 
 router = APIRouter(prefix="/medicos", tags=["medicos"])
+
+
+def _exigir_vinculo(medico: Medico, id_paciente: int, db: Session) -> None:
+    """Corta con 403 si ESTE médico no tiene a `id_paciente` vinculado."""
+    vinculado = (
+        db.query(MedicoPaciente)
+        .filter(MedicoPaciente.id_medico == medico.id_medico, MedicoPaciente.id_paciente == id_paciente)
+        .first()
+    )
+    if vinculado is None:
+        raise HTTPException(status_code=403, detail="No tenés a ese paciente vinculado.")
 
 
 @router.get("/me", response_model=MedicoPerfilOut)
@@ -91,3 +104,49 @@ def desvincular_paciente(
 
     db.delete(vinculo)
     db.commit()
+
+
+@router.get("/me/pacientes/{id_paciente}/evaluaciones", response_model=list[EvaluacionOut])
+def evaluaciones_de_paciente(
+    id_paciente: int,
+    medico: Medico = Depends(get_current_medico),
+    db: Session = Depends(get_db),
+):
+    """Evaluaciones (espirometría/PIM) de un paciente vinculado a ESTE médico, más recientes primero."""
+    _exigir_vinculo(medico, id_paciente, db)
+    return (
+        db.query(Evaluacion)
+        .filter(Evaluacion.id_paciente == id_paciente)
+        .order_by(Evaluacion.fecha_hora.desc())
+        .all()
+    )
+
+
+@router.get(
+    "/me/pacientes/{id_paciente}/evaluaciones/{id_evaluacion}/muestras",
+    response_model=EvaluacionMuestraOut,
+)
+def muestras_de_evaluacion(
+    id_paciente: int,
+    id_evaluacion: int,
+    medico: Medico = Depends(get_current_medico),
+    db: Session = Depends(get_db),
+):
+    """La curva cruda de una evaluación puntual, para graficar flujo/volumen/presión."""
+    _exigir_vinculo(medico, id_paciente, db)
+
+    evaluacion = (
+        db.query(Evaluacion)
+        .filter(Evaluacion.id_evaluacion == id_evaluacion, Evaluacion.id_paciente == id_paciente)
+        .first()
+    )
+    if evaluacion is None:
+        raise HTTPException(status_code=404, detail="No existe esa evaluación para ese paciente.")
+
+    muestras = (
+        db.query(EvaluacionMuestra).filter(EvaluacionMuestra.id_evaluacion == id_evaluacion).first()
+    )
+    if muestras is None:
+        raise HTTPException(status_code=404, detail="Esa evaluación no tiene curva cargada.")
+
+    return muestras
