@@ -1108,6 +1108,7 @@ button.cal-ribbon {
 .field input[type='text'],
 .field input[type='email'],
 .field input[type='number'],
+.field input[type='password'],
 .field select {
   width: 100%;
   padding: 10px 12px;
@@ -1116,6 +1117,35 @@ button.cal-ribbon {
   background: var(--bg);
   font-size: 14px;
   color: var(--ink);
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 42px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  color: var(--teal-deep);
 }
 
 .freq-picker {

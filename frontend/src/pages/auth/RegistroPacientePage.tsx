@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ApiError, api } from '../../api/client'
 import type { Sexo } from '../../api/types'
 import { useSession } from '../../auth/session'
+import { PasswordField } from '../../components/ui/PasswordField'
 import { AuthShell } from './AuthShell'
 
 export function RegistroPacientePage() {
@@ -132,30 +133,24 @@ export function RegistroPacientePage() {
         </div>
 
         <div className="auth-row">
-          <div className="field">
-            <label htmlFor="pin">PIN (4 dígitos)</label>
-            <input
-              id="pin"
-              type="password"
-              inputMode="numeric"
-              maxLength={4}
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-              required
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="pin2">Repetir PIN</label>
-            <input
-              id="pin2"
-              type="password"
-              inputMode="numeric"
-              maxLength={4}
-              value={pin2}
-              onChange={(e) => setPin2(e.target.value.replace(/\D/g, ''))}
-              required
-            />
-          </div>
+          <PasswordField
+            id="pin"
+            label="PIN (4 dígitos)"
+            inputMode="numeric"
+            maxLength={4}
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+            required
+          />
+          <PasswordField
+            id="pin2"
+            label="Repetir PIN"
+            inputMode="numeric"
+            maxLength={4}
+            value={pin2}
+            onChange={(e) => setPin2(e.target.value.replace(/\D/g, ''))}
+            required
+          />
         </div>
 
         <div className="auth-row">

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import { ApiError, api } from '../../api/client'
 import { useSession } from '../../auth/session'
+import { PasswordField } from '../../components/ui/PasswordField'
 import { AuthShell } from './AuthShell'
 
 type Tab = 'paciente' | 'medico'
@@ -84,20 +85,17 @@ export function LoginPage() {
                 required
               />
             </div>
-            <div className="field">
-              <label htmlFor="pin">PIN (4 dígitos)</label>
-              <input
-                id="pin"
-                type="password"
-                inputMode="numeric"
-                autoComplete="current-password"
-                maxLength={4}
-                pattern="\d{4}"
-                value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                required
-              />
-            </div>
+            <PasswordField
+              id="pin"
+              label="PIN (4 dígitos)"
+              inputMode="numeric"
+              autoComplete="current-password"
+              maxLength={4}
+              pattern="\d{4}"
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+              required
+            />
           </>
         ) : (
           <>
@@ -112,17 +110,14 @@ export function LoginPage() {
                 required
               />
             </div>
-            <div className="field">
-              <label htmlFor="contrasena">Contraseña</label>
-              <input
-                id="contrasena"
-                type="password"
-                autoComplete="current-password"
-                value={contrasena}
-                onChange={(e) => setContrasena(e.target.value)}
-                required
-              />
-            </div>
+            <PasswordField
+              id="contrasena"
+              label="Contraseña"
+              autoComplete="current-password"
+              value={contrasena}
+              onChange={(e) => setContrasena(e.target.value)}
+              required
+            />
           </>
         )}
 

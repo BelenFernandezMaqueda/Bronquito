@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { ApiError, api } from '../../api/client'
+import { PasswordField } from '../../components/ui/PasswordField'
 import { AuthShell } from './AuthShell'
 
 interface ResetearPageProps {
@@ -79,32 +80,26 @@ export function ResetearPage({ modo }: ResetearPageProps) {
       {error && <div className="auth-alert error">{error}</div>}
 
       <form onSubmit={onSubmit}>
-        <div className="field">
-          <label htmlFor="valor">{esPin ? 'Nuevo PIN (4 dígitos)' : 'Nueva contraseña (mín. 8)'}</label>
-          <input
-            id="valor"
-            type="password"
-            inputMode={esPin ? 'numeric' : undefined}
-            maxLength={esPin ? 4 : undefined}
-            autoComplete="new-password"
-            value={valor}
-            onChange={(e) => setValor(esPin ? e.target.value.replace(/\D/g, '') : e.target.value)}
-            required
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="valor2">Repetir {esPin ? 'PIN' : 'contraseña'}</label>
-          <input
-            id="valor2"
-            type="password"
-            inputMode={esPin ? 'numeric' : undefined}
-            maxLength={esPin ? 4 : undefined}
-            autoComplete="new-password"
-            value={valor2}
-            onChange={(e) => setValor2(esPin ? e.target.value.replace(/\D/g, '') : e.target.value)}
-            required
-          />
-        </div>
+        <PasswordField
+          id="valor"
+          label={esPin ? 'Nuevo PIN (4 dígitos)' : 'Nueva contraseña (mín. 8)'}
+          inputMode={esPin ? 'numeric' : undefined}
+          maxLength={esPin ? 4 : undefined}
+          autoComplete="new-password"
+          value={valor}
+          onChange={(e) => setValor(esPin ? e.target.value.replace(/\D/g, '') : e.target.value)}
+          required
+        />
+        <PasswordField
+          id="valor2"
+          label={`Repetir ${esPin ? 'PIN' : 'contraseña'}`}
+          inputMode={esPin ? 'numeric' : undefined}
+          maxLength={esPin ? 4 : undefined}
+          autoComplete="new-password"
+          value={valor2}
+          onChange={(e) => setValor2(esPin ? e.target.value.replace(/\D/g, '') : e.target.value)}
+          required
+        />
         <button type="submit" className="btn btn-teal btn-block" disabled={enviando}>
           {enviando ? 'Guardando…' : `Cambiar ${etiqueta}`}
         </button>

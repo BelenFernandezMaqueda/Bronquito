@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Modal } from '../../components/ui/Modal'
+import { PasswordField } from '../../components/ui/PasswordField'
 import { useSession } from '../../auth/session'
 import { ApiError, api } from '../../api/client'
 import type { PacientePerfil } from '../../api/types'
@@ -69,19 +70,16 @@ export function ConnectPatientModal({ onClose, onConectado }: ConnectPatientModa
             required
           />
         </div>
-        <div className="field">
-          <label htmlFor="conectar-pin">PIN (4 dígitos)</label>
-          <input
-            id="conectar-pin"
-            type="password"
-            inputMode="numeric"
-            maxLength={4}
-            pattern="\d{4}"
-            value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-            required
-          />
-        </div>
+        <PasswordField
+          id="conectar-pin"
+          label="PIN (4 dígitos)"
+          inputMode="numeric"
+          maxLength={4}
+          pattern="\d{4}"
+          value={pin}
+          onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+          required
+        />
       </form>
     </Modal>
   )
