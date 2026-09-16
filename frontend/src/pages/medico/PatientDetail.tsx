@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Paciente } from '../../types'
-import type { Entrenamiento, Evaluacion, Frecuencia } from '../../api/types'
+import type { Entrenamiento, Evaluacion, Frecuencia, Rutina } from '../../api/types'
 import { ApiError, api } from '../../api/client'
 import { useSession } from '../../auth/session'
 import type { SerieTendencia } from '../../components/ui/TrendChartCarousel'
@@ -86,6 +86,24 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
       })
       .finally(() => {
         if (!cancelado) setCargandoEntrenamientos(false)
+      })
+    return () => {
+      cancelado = true
+    }
+  }, [token, paciente.id])
+
+  const [rutina, setRutina] = useState<Rutina | null>(null)
+
+  useEffect(() => {
+    if (!token) return
+    let cancelado = false
+    api.medico
+      .rutinaDe(token, Number(paciente.id))
+      .then((datos) => {
+        if (!cancelado) setRutina(datos)
+      })
+      .catch(() => {
+        // Si falla, el tag de resistencia queda como "sin definir".
       })
     return () => {
       cancelado = true
@@ -207,6 +225,12 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
     ['Volumen total', 'volumen total', 'Volumen total (L)', 'L', (e) => e.volumen_total],
   ])
 
+  const valoresPim = evaluacionesCronologicas
+    .map((e) => e.pim)
+    .filter((v): v is number => v != null)
+  const pimInicial = valoresPim[0]
+  const pimActual = valoresPim[valoresPim.length - 1]
+
   return (
     <div className="card">
       <div className="detail-title-row">
@@ -227,9 +251,11 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
             {paciente.diagnostico} · {paciente.edad} años
           </div>
           <div className="tags">
-            <span className="tag">PIM inicial: {paciente.pimInicial} cmH₂O</span>
-            <span className="tag">PIM actual: {paciente.pimActual} cmH₂O</span>
-            <span className="tag">Resistencia actual: Nivel {paciente.resistenciaActual}</span>
+            <span className="tag">PIM inicial: {pimInicial != null ? `${pimInicial} cmH₂O` : 'sin definir'}</span>
+            <span className="tag">PIM actual: {pimActual != null ? `${pimActual} cmH₂O` : 'sin definir'}</span>
+            <span className="tag">
+              Resistencia actual: {rutina ? `Nivel ${rutina.resistencia_activa}` : 'sin definir'}
+            </span>
             <button
               className="tag tag-clickable"
               onClick={() => setModalFrecuencia(true)}

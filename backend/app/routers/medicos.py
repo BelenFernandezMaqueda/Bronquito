@@ -13,11 +13,13 @@ from app.models.frecuencia_recomendada import FrecuenciaRecomendada
 from app.models.medico import Medico
 from app.models.medico_paciente import MedicoPaciente
 from app.models.paciente import Paciente
+from app.models.rutina import Rutina
 from app.schemas.entrenamiento import EntrenamientoOut
 from app.schemas.evaluacion import EvaluacionMuestraOut, EvaluacionOut
 from app.schemas.frecuencia import FrecuenciaCrearRequest, FrecuenciaOut
 from app.schemas.medico import MedicoPerfilOut, VincularPacienteRequest
 from app.schemas.paciente import PacientePerfilOut
+from app.schemas.rutina import RutinaOut
 
 router = APIRouter(prefix="/medicos", tags=["medicos"])
 
@@ -141,6 +143,21 @@ def entrenamientos_de_paciente(
         .order_by(Entrenamiento.fecha_hora.desc())
         .all()
     )
+
+
+@router.get("/me/pacientes/{id_paciente}/rutina", response_model=RutinaOut | None)
+def rutina_de_paciente(
+    id_paciente: int,
+    medico: Medico = Depends(get_current_medico),
+    db: Session = Depends(get_db),
+):
+    """
+    Rutina activa de un paciente vinculado a ESTE médico. `None` si todavía
+    no tiene ninguna (por ejemplo, se registró por la web y nunca se conectó
+    al dispositivo ni el médico le cargó una).
+    """
+    _exigir_vinculo(medico, id_paciente, db)
+    return db.query(Rutina).filter(Rutina.id_paciente == id_paciente).first()
 
 
 @router.get(

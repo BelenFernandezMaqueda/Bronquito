@@ -83,6 +83,15 @@ export interface Entrenamiento {
   humedad: number | null
 }
 
+/** La rutina activa de un paciente ahora mismo. */
+export interface Rutina {
+  resistencia_activa: number
+  tiempo_descanso: number
+  repeticiones: number
+  modificado_por: 'ALGORITMO' | 'MEDICO'
+  fecha_actualizacion: string
+}
+
 /** Una entrada del historial de frecuencia/días recomendados de un paciente. */
 export interface Frecuencia {
   id_frecuencia: number
