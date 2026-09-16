@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_medico
-from app.core.security import verificar_secreto
+from app.core.security import hashear_secreto, verificar_secreto
 from app.core.timezone import hoy_argentina
 from app.models.entrenamiento import Entrenamiento
 from app.models.evaluacion import Evaluacion, EvaluacionMuestra
@@ -17,7 +17,7 @@ from app.models.rutina import Rutina
 from app.schemas.entrenamiento import EntrenamientoOut
 from app.schemas.evaluacion import EvaluacionMuestraOut, EvaluacionOut
 from app.schemas.frecuencia import FrecuenciaCrearRequest, FrecuenciaOut
-from app.schemas.medico import MedicoPerfilOut, VincularPacienteRequest
+from app.schemas.medico import MedicoPerfilOut, MedicoPerfilUpdate, VincularPacienteRequest
 from app.schemas.paciente import PacientePerfilOut
 from app.schemas.rutina import RutinaOut
 
@@ -42,6 +42,33 @@ def mi_perfil(medico: Medico = Depends(get_current_medico)):
     ya se encarga de exigir un token válido de médico antes de llegar acá.
     Si el token falta o es inválido, la función ni se ejecuta.
     """
+    return medico
+
+
+@router.patch("/me", response_model=MedicoPerfilOut)
+def actualizar_mi_perfil(
+    payload: MedicoPerfilUpdate,
+    medico: Medico = Depends(get_current_medico),
+    db: Session = Depends(get_db),
+):
+    datos = payload.model_dump(exclude_unset=True, exclude_none=True)
+
+    nuevo_usuario = datos.pop("usuario", None)
+    if nuevo_usuario is not None and nuevo_usuario != medico.usuario:
+        ya_usado = db.query(Medico).filter(Medico.usuario == nuevo_usuario).first()
+        if ya_usado is not None:
+            raise HTTPException(status_code=400, detail="Ese mail ya está en uso por otra cuenta.")
+        medico.usuario = nuevo_usuario
+
+    nueva_contrasena = datos.pop("nueva_contrasena", None)
+    if nueva_contrasena is not None:
+        medico.contrasena_hash = hashear_secreto(nueva_contrasena)
+
+    for campo, valor in datos.items():
+        setattr(medico, campo, valor.strip() if campo in {"nombre", "apellido"} else valor)
+
+    db.commit()
+    db.refresh(medico)
     return medico
 
 

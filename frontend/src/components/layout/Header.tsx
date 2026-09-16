@@ -1,6 +1,7 @@
 import { DuckLogo } from '../ui/DuckLogo'
 import { WaveBottom } from '../ui/WaveBottom'
 import { useSession } from '../../auth/session'
+import { useNavigate } from 'react-router-dom'
 
 function iniciales(nombre: string, apellido: string, fallback: string): string {
   const a = nombre.trim()[0] ?? ''
@@ -11,6 +12,7 @@ function iniciales(nombre: string, apellido: string, fallback: string): string {
 
 export function Header() {
   const { perfil, cerrarSesion } = useSession()
+  const navigate = useNavigate()
 
   let nombreMostrado = ''
   let etiquetaRol = ''
@@ -44,13 +46,20 @@ export function Header() {
         </div>
 
         <div className="who">
-          <div className="avatar" aria-hidden="true">
-            {ini}
-          </div>
-          <div>
-            <div className="who-name">{nombreMostrado}</div>
-            <div className="who-role">{etiquetaRol}</div>
-          </div>
+          <button
+            className="who-profile"
+            type="button"
+            onClick={() => navigate('/configuracion')}
+            aria-label="Abrir configuración de perfil"
+          >
+            <div className="avatar" aria-hidden="true">
+              {ini}
+            </div>
+            <div>
+              <div className="who-name">{nombreMostrado}</div>
+              <div className="who-role">{etiquetaRol}</div>
+            </div>
+          </button>
           <button className="btn btn-ghost btn-sm" onClick={cerrarSesion}>
             Salir
           </button>

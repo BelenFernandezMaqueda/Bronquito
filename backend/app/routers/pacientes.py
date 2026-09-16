@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_paciente
+from app.core.security import hashear_secreto
 from app.models.paciente import Paciente
 from app.schemas.paciente import PacientePerfilOut, PacientePerfilUpdate
 
@@ -29,7 +30,22 @@ def actualizar_mi_perfil(
     acá con `email` + `acepto_terminos=true` antes de dejarla entrar al
     dashboard (ver `perfil_completo` en el schema).
     """
-    datos = payload.model_dump(exclude_unset=True)
+    datos = payload.model_dump(exclude_unset=True, exclude_none=True)
+
+    nuevo_dni = datos.pop("dni", None)
+    if nuevo_dni is not None and nuevo_dni != paciente.dni:
+        ya_usado = db.query(Paciente).filter(Paciente.dni == nuevo_dni).first()
+        if ya_usado is not None:
+            raise HTTPException(status_code=400, detail="Ya existe una cuenta con ese DNI.")
+        paciente.dni = nuevo_dni
+
+    nuevo_pin = datos.pop("pin", None)
+    if nuevo_pin is not None:
+        paciente.pin_hash = hashear_secreto(nuevo_pin)
+
+    enfermedades = datos.pop("enfermedades", None)
+    if enfermedades is not None:
+        paciente.enfermedades = ", ".join(enfermedades)
 
     nuevo_email = datos.get("email")
     if nuevo_email is not None and nuevo_email != paciente.email:
@@ -45,7 +61,7 @@ def actualizar_mi_perfil(
     datos.pop("acepto_terminos", None)
 
     for campo, valor in datos.items():
-        setattr(paciente, campo, valor)
+        setattr(paciente, campo, valor.strip() if campo in {"nombre", "apellido"} else valor)
 
     db.commit()
     db.refresh(paciente)

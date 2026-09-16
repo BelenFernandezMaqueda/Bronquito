@@ -1,7 +1,9 @@
 from datetime import date
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, computed_field, field_validator
+
+from app.schemas.auth import EnfermedadPreexistente
 
 
 class PacientePerfilOut(BaseModel):
@@ -47,6 +49,8 @@ class PacientePerfilUpdate(BaseModel):
     creada por el dispositivo que sólo carga el mail y acepta los términos.
     """
 
+    dni: str | None = Field(default=None, min_length=6, max_length=20)
+    pin: str | None = Field(default=None, pattern=r"^\d{4}$", description="4 dígitos")
     nombre: str | None = Field(default=None, min_length=1, max_length=80)
     apellido: str | None = Field(default=None, min_length=1, max_length=80)
     email: EmailStr | None = None
@@ -55,4 +59,31 @@ class PacientePerfilUpdate(BaseModel):
     fecha_nacimiento: date | None = None
     sexo: Literal["F", "M", "X"] | None = None
     fumador: bool | None = None
+    enfermedades: list[EnfermedadPreexistente] | None = Field(default=None, min_length=1, max_length=6)
     acepto_terminos: bool | None = None
+
+    @field_validator("dni")
+    @classmethod
+    def dni_numerico(cls, valor: str | None) -> str | None:
+        if valor is None:
+            return valor
+        dni = valor.strip()
+        if not dni.isdigit():
+            raise ValueError("El DNI solo puede contener números.")
+        return dni
+
+    @field_validator("nombre", "apellido")
+    @classmethod
+    def nombre_sin_numeros(cls, valor: str | None) -> str | None:
+        if valor is not None and any(caracter.isdigit() for caracter in valor):
+            raise ValueError("El nombre y el apellido no pueden contener números.")
+        return valor
+
+    @field_validator("enfermedades")
+    @classmethod
+    def enfermedades_sin_repetir(
+        cls, valores: list[EnfermedadPreexistente] | None
+    ) -> list[EnfermedadPreexistente] | None:
+        if valores is not None and len(valores) != len(set(valores)):
+            raise ValueError("No podés seleccionar la misma enfermedad más de una vez.")
+        return valores

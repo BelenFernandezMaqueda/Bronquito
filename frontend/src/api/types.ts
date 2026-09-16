@@ -141,6 +141,8 @@ export interface PacienteRegistroBody {
 }
 
 export interface PacientePerfilUpdateBody {
+  dni?: string
+  pin?: string
   nombre?: string
   apellido?: string
   email?: string
@@ -149,7 +151,15 @@ export interface PacientePerfilUpdateBody {
   fecha_nacimiento?: string
   sexo?: Sexo
   fumador?: boolean
+  enfermedades?: EnfermedadPreexistente[]
   acepto_terminos?: boolean
+}
+
+export interface MedicoPerfilUpdateBody {
+  usuario?: string
+  nombre?: string
+  apellido?: string
+  nueva_contrasena?: string
 }
 
 export interface FrecuenciaCrearBody {
