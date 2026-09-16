@@ -7,6 +7,8 @@ export type Rol = 'medico' | 'paciente'
 
 export type Sexo = 'F' | 'M' | 'X'
 
+export type EnfermedadPreexistente = 'EPOC' | 'Asma' | 'Lesión Medular' | 'Fibrosis quística' | 'Otra' | 'NS/NC'
+
 export interface TokenOut {
   access_token: string
   token_type: 'bearer'
@@ -36,6 +38,7 @@ export interface PacientePerfil {
   fecha_nacimiento: string
   sexo: string
   fumador: boolean
+  enfermedades: string | null
   fecha_registro: string
   origen: 'DISPOSITIVO' | 'WEB'
   acepto_terminos: boolean
@@ -133,6 +136,7 @@ export interface PacienteRegistroBody {
   fecha_nacimiento: string
   sexo: Sexo
   fumador: boolean
+  enfermedades: EnfermedadPreexistente[]
   acepto_terminos: boolean
 }
 

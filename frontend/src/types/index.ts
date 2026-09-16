@@ -28,6 +28,7 @@ export interface Paciente extends UsuarioBase {
   rol: 'paciente'
   edad: number
   diagnostico: string
+  enfermedades?: string | null
   fechaNacimiento?: string
   /** No todos los pacientes mock lo tienen cargado; los que vienen de la API sí. */
   dni?: string

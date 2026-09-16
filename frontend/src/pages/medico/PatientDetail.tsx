@@ -248,9 +248,10 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
       <div className="detail-header">
         <div className="detail-id">
           <div className="p-sub">
-            {paciente.diagnostico} · {paciente.edad} años
+            {paciente.edad} años
           </div>
           <div className="tags">
+            <span className="tag">Enfermedades: {paciente.enfermedades ?? 'sin informar'}</span>
             <span className="tag">PIM inicial: {pimInicial != null ? `${pimInicial} cmH₂O` : 'sin definir'}</span>
             <span className="tag">PIM actual: {pimActual != null ? `${pimActual} cmH₂O` : 'sin definir'}</span>
             <span className="tag">

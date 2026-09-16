@@ -19,6 +19,7 @@ class PacientePerfilOut(BaseModel):
     fecha_nacimiento: date
     sexo: str
     fumador: bool
+    enfermedades: str | None
     fecha_registro: date
     origen: str
     acepto_terminos: bool

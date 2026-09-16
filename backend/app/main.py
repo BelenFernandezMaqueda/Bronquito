@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.core.database import Base, SessionLocal, engine
+from app.core.database import Base, SessionLocal, engine, migrar_esquema_existente
 from app.routers import auth, medicos, pacientes
 from app.seed import seed_if_empty
 
@@ -35,6 +35,7 @@ def on_startup() -> None:
     # se reemplaza por migraciones con Alembic (versionar cambios de schema
     # en vez de recrear todo desde los modelos) — ver README del backend.
     Base.metadata.create_all(bind=engine)
+    migrar_esquema_existente()
 
     db = SessionLocal()
     try:

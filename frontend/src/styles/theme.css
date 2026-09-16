@@ -1511,6 +1511,24 @@ button.cal-ribbon {
   flex-shrink: 0;
 }
 
+.enfermedades-field > span {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+
+.enfermedades-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 14px;
+}
+
+.enfermedades-options .field-check {
+  margin: 0 0 10px;
+}
+
 .btn-block {
   width: 100%;
   justify-content: center;
@@ -1577,6 +1595,10 @@ button.cal-ribbon {
 
 @media (max-width: 480px) {
   .auth-row {
+    grid-template-columns: 1fr;
+  }
+
+  .enfermedades-options {
     grid-template-columns: 1fr;
   }
 }
