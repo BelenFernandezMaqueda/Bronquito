@@ -6,11 +6,14 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_medico
 from app.core.security import verificar_secreto
+from app.core.timezone import hoy_argentina
 from app.models.evaluacion import Evaluacion, EvaluacionMuestra
+from app.models.frecuencia_recomendada import FrecuenciaRecomendada
 from app.models.medico import Medico
 from app.models.medico_paciente import MedicoPaciente
 from app.models.paciente import Paciente
 from app.schemas.evaluacion import EvaluacionMuestraOut, EvaluacionOut
+from app.schemas.frecuencia import FrecuenciaCrearRequest, FrecuenciaOut
 from app.schemas.medico import MedicoPerfilOut, VincularPacienteRequest
 from app.schemas.paciente import PacientePerfilOut
 
@@ -150,3 +153,52 @@ def muestras_de_evaluacion(
         raise HTTPException(status_code=404, detail="Esa evaluación no tiene curva cargada.")
 
     return muestras
+
+
+@router.get("/me/pacientes/{id_paciente}/frecuencia", response_model=list[FrecuenciaOut])
+def historial_frecuencia(
+    id_paciente: int,
+    medico: Medico = Depends(get_current_medico),
+    db: Session = Depends(get_db),
+):
+    """
+    Historial de frecuencia/días recomendados de un paciente. Es del
+    paciente, no de este médico: si tiene más de un médico vinculado, todos
+    ven el mismo historial completo (más recientes primero).
+    """
+    _exigir_vinculo(medico, id_paciente, db)
+    return (
+        db.query(FrecuenciaRecomendada)
+        .filter(FrecuenciaRecomendada.id_paciente == id_paciente)
+        .order_by(FrecuenciaRecomendada.vigente_desde.desc(), FrecuenciaRecomendada.creado_en.desc())
+        .all()
+    )
+
+
+@router.post("/me/pacientes/{id_paciente}/frecuencia", response_model=FrecuenciaOut, status_code=201)
+def crear_frecuencia(
+    id_paciente: int,
+    payload: FrecuenciaCrearRequest,
+    medico: Medico = Depends(get_current_medico),
+    db: Session = Depends(get_db),
+):
+    """
+    Agrega una entrada nueva al historial (no pisa las anteriores), vigente
+    desde hoy. `id_medico` queda guardado solo para saber quién hizo el
+    cambio — no filtra qué ven los demás médicos vinculados a este paciente.
+    """
+    _exigir_vinculo(medico, id_paciente, db)
+
+    frecuencia = FrecuenciaRecomendada(
+        id_paciente=id_paciente,
+        id_medico=medico.id_medico,
+        sesiones_por_semana=payload.sesiones_por_semana,
+        dias_semana=payload.dias_semana,
+        vigente_desde=hoy_argentina(),
+        creado_en=datetime.now(timezone.utc),
+    )
+    db.add(frecuencia)
+    db.commit()
+    db.refresh(frecuencia)
+
+    return frecuencia

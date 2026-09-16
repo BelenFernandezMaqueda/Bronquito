@@ -66,6 +66,16 @@ export interface EvaluacionMuestras {
   volumen: number[]
 }
 
+/** Una entrada del historial de frecuencia/días recomendados de un paciente. */
+export interface Frecuencia {
+  id_frecuencia: number
+  sesiones_por_semana: number
+  /** Días de la semana recomendados (0 = lunes ... 6 = domingo). */
+  dias_semana: number[]
+  vigente_desde: string
+  creado_en: string
+}
+
 // --- Request bodies -------------------------------------------------------
 
 export interface MedicoLoginBody {
@@ -110,4 +120,10 @@ export interface PacientePerfilUpdateBody {
   sexo?: Sexo
   fumador?: boolean
   acepto_terminos?: boolean
+}
+
+export interface FrecuenciaCrearBody {
+  sesiones_por_semana: number
+  /** Días de la semana recomendados (0 = lunes ... 6 = domingo). */
+  dias_semana: number[]
 }

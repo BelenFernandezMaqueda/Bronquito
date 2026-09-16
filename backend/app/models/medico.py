@@ -40,3 +40,4 @@ class Medico(Base):
 
     vinculos = relationship("MedicoPaciente", back_populates="medico")
     notas = relationship("NotaMedica", back_populates="medico")
+    frecuencias_recomendadas = relationship("FrecuenciaRecomendada", back_populates="medico")

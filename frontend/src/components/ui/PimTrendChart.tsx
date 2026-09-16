@@ -3,13 +3,24 @@ interface PimTrendChartProps {
   valores: number[]
   /** Una fecha corta por valor, mismo orden y largo que `valores`. */
   fechas: string[]
-  caption: string
+  /** Título arriba del gráfico, ej. "Evolución de PIM". */
+  titulo: string
+  /** Unidad para el texto de rango de abajo, ej. "cmH₂O" o "L". */
+  unidad: string
   /** Texto del eje Y, ej. "PIM (cmH₂O)" o "FVC (L)". */
   etiquetaEje?: string
+  color?: string
 }
 
 /** Evolución de una métrica a lo largo de las evaluaciones, con ejes X/Y. */
-export function PimTrendChart({ valores, fechas, caption, etiquetaEje = 'PIM (cmH₂O)' }: PimTrendChartProps) {
+export function PimTrendChart({
+  valores,
+  fechas,
+  titulo,
+  unidad,
+  etiquetaEje = 'PIM (cmH₂O)',
+  color = '#F0459A',
+}: PimTrendChartProps) {
   const w = 340
   const h = 220
   const padLeft = 46
@@ -42,7 +53,13 @@ export function PimTrendChart({ valores, fechas, caption, etiquetaEje = 'PIM (cm
 
   return (
     <div className="chart-wrap">
-      <svg viewBox={`0 0 ${w} ${h}`} width="100%" role="img" aria-label={caption}>
+      <div className="signal-chart-title" style={{ color }}>
+        {titulo}
+      </div>
+      <div className="trend-chart-range">
+        {valores[0]} → {valores[valores.length - 1]} {unidad}
+      </div>
+      <svg viewBox={`0 0 ${w} ${h}`} width="100%" role="img" aria-label={titulo}>
         <text x={padLeft} y={12} fontSize="9.5" fill="#5C7C82" fontFamily="Nunito">
           {etiquetaEje}
         </text>
@@ -85,12 +102,11 @@ export function PimTrendChart({ valores, fechas, caption, etiquetaEje = 'PIM (cm
           </text>
         ))}
 
-        <polyline points={puntosStr} fill="none" stroke="#F0459A" strokeWidth={3} strokeLinecap="round" />
+        <polyline points={puntosStr} fill="none" stroke={color} strokeWidth={3} strokeLinecap="round" />
         {puntos.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r={3.5} fill="#F0459A" />
+          <circle key={i} cx={p.x} cy={p.y} r={3.5} fill={color} />
         ))}
       </svg>
-      <div className="chart-caption">{caption}</div>
     </div>
   )
 }

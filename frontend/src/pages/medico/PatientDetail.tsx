@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Paciente } from '../../types'
-import type { Evaluacion } from '../../api/types'
+import type { Evaluacion, Frecuencia } from '../../api/types'
 import { ApiError, api } from '../../api/client'
 import { useSession } from '../../auth/session'
 import { EstadoSesionBadge } from '../../components/ui/Badge'
@@ -10,7 +10,7 @@ import { MonthCalendar } from '../../components/ui/MonthCalendar'
 import { Modal } from '../../components/ui/Modal'
 import { TrashIcon } from '../../components/ui/TrashIcon'
 import { FrequencyModal } from './FrequencyModal'
-import { entrenamientosDe, formatearFecha, formatearDuracion, HOY } from '../../data/mockData'
+import { entrenamientosDe, formatearFecha, formatearDuracion, isoArgentina } from '../../data/mockData'
 
 type Tab = 'evaluaciones' | 'entrenamiento' | 'calendario'
 
@@ -23,7 +23,7 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
   const { token } = useSession()
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('evaluaciones')
-  const [frecuencia, setFrecuencia] = useState(paciente.frecuenciaSemanal)
+  const [historialFrecuencia, setHistorialFrecuencia] = useState<Frecuencia[]>([])
   const [modalFrecuencia, setModalFrecuencia] = useState(false)
   const [confirmarDesvinculo, setConfirmarDesvinculo] = useState(false)
   const [desvinculando, setDesvinculando] = useState(false)
@@ -66,6 +66,22 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
     }
   }, [token, paciente.id])
 
+  useEffect(() => {
+    if (!token) return
+    let cancelado = false
+    api.medico
+      .historialFrecuencia(token, Number(paciente.id))
+      .then((datos) => {
+        if (!cancelado) setHistorialFrecuencia(datos)
+      })
+      .catch(() => {
+        // Si falla, el calendario simplemente no muestra días recomendados.
+      })
+    return () => {
+      cancelado = true
+    }
+  }, [token, paciente.id])
+
   // Dos evaluaciones son la misma sesión de consultorio si comparten el
   // `fecha_hora` exacto (se captura una sola vez al arrancar la sesión) —
   // se agrupan en una sola fila de la tabla.
@@ -82,15 +98,37 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
 
   const ultimaEvaluacion = evaluaciones[0]
   const entrenamientos = entrenamientosDe(paciente.id)
+  const hoy = new Date()
+  const hoyIso = isoArgentina(hoy)
 
-  const fechasConSesion = useMemo(
+  // La API ya devuelve el historial más reciente primero; para desempatar
+  // cambios del mismo día lo invertimos (más viejo primero, ver MonthCalendar).
+  const historialParaCalendario = useMemo(
     () =>
-      new Set([
-        ...entrenamientos.map((e) => e.fecha),
-        ...evaluaciones.map((e) => e.fecha_hora.slice(0, 10)),
-      ]),
-    [entrenamientos, evaluaciones],
+      [...historialFrecuencia].reverse().map((f) => ({ vigenteDesde: f.vigente_desde, dias: f.dias_semana })),
+    [historialFrecuencia],
   )
+
+  // La entrada vigente hoy es siempre la primera del historial (la API lo
+  // ordena por vigente_desde/creado_en descendente, y el servidor siempre
+  // marca vigente_desde = hoy al crear una nueva).
+  const frecuenciaVigente = historialFrecuencia[0]
+
+  const diasConEntrenamiento = useMemo(() => new Set(entrenamientos.map((e) => e.fecha)), [entrenamientos])
+
+  // Una evaluación por día (si hay espirometría y PIM del mismo día, se prioriza
+  // la espirometría) — para saber a qué evaluación llevar al clickear el banderín.
+  const evaluacionPorFecha = useMemo(() => {
+    const mapa = new Map<string, Evaluacion>()
+    for (const e of evaluaciones) {
+      const iso = e.fecha_hora.slice(0, 10)
+      const actual = mapa.get(iso)
+      if (!actual || (actual.tipo !== 'ESPIROMETRIA' && e.tipo === 'ESPIROMETRIA')) {
+        mapa.set(iso, e)
+      }
+    }
+    return mapa
+  }, [evaluaciones])
 
   const evaluacionesCronologicas = [...evaluaciones].reverse()
   const seriePim = evaluacionesCronologicas
@@ -117,13 +155,15 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
       <div className="detail-header">
         <div className="detail-id">
           <div className="p-sub">
-            {paciente.diagnostico} · {paciente.edad} años · ID #{paciente.id.toUpperCase()}
+            {paciente.diagnostico} · {paciente.edad} años
           </div>
           <div className="tags">
             <span className="tag">PIM inicial: {paciente.pimInicial} cmH₂O</span>
             <span className="tag">PIM actual: {paciente.pimActual} cmH₂O</span>
             <span className="tag">Resistencia actual: Nivel {paciente.resistenciaActual}</span>
-            <span className="tag">Frecuencia: {frecuencia}x/semana</span>
+            <span className="tag">
+              Frecuencia: {frecuenciaVigente ? `${frecuenciaVigente.sesiones_por_semana}x/semana` : 'sin definir'}
+            </span>
           </div>
         </div>
       </div>
@@ -160,7 +200,9 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
                       valores={seriePim.map((p) => p.valor)}
                       fechas={seriePim.map((p) => p.fecha)}
                       etiquetaEje="PIM (cmH₂O)"
-                      caption={`Evolución de PIM: ${seriePim[0].valor} → ${seriePim[seriePim.length - 1].valor} cmH₂O`}
+                      titulo="Evolución de PIM"
+                      unidad="cmH₂O"
+                      color="#F0459A"
                     />
                   ) : (
                     <div className="chart-wrap">
@@ -172,7 +214,9 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
                       valores={serieFvc.map((p) => p.valor)}
                       fechas={serieFvc.map((p) => p.fecha)}
                       etiquetaEje="FVC (L)"
-                      caption={`Evolución de FVC: ${serieFvc[0].valor} → ${serieFvc[serieFvc.length - 1].valor} L`}
+                      titulo="Evolución de FVC"
+                      unidad="L"
+                      color="#2FA7A0"
                     />
                   ) : (
                     <div className="chart-wrap">
@@ -286,14 +330,24 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
       {tab === 'calendario' && (
         <div role="tabpanel">
           <MonthCalendar
-            anio={HOY.getFullYear()}
-            mes={HOY.getMonth()}
-            fechasConSesion={fechasConSesion}
-            hoyIso={HOY.toISOString().slice(0, 10)}
+            anio={hoy.getFullYear()}
+            mes={hoy.getMonth()}
+            diasConEvaluacion={new Set(evaluacionPorFecha.keys())}
+            diasConEntrenamiento={diasConEntrenamiento}
+            historialRecomendaciones={historialParaCalendario}
+            hoyIso={hoyIso}
+            onClickEvaluacion={(iso) => {
+              const e = evaluacionPorFecha.get(iso)
+              if (e) navigate(`/medico/pacientes/${paciente.id}/evaluaciones/${e.id_evaluacion}`)
+            }}
           />
           <p className="invite-note">
-            Los días marcados en celeste tienen una sesión de entrenamiento o calibración
-            registrada. La frecuencia recomendada actual es de {frecuencia} sesiones por semana;
+            Los días marcados en rosa son los recomendados para entrenar. La cinta azul indica que
+            hubo una evaluación ese día (clickeala para verla); la cinta rosa, que hubo un
+            entrenamiento.{' '}
+            {frecuenciaVigente
+              ? `La frecuencia recomendada actual es de ${frecuenciaVigente.sesiones_por_semana} sesiones por semana; `
+              : 'Todavía no hay una frecuencia definida; '}
             podés ajustarla con "Modificar frecuencia".
           </p>
         </div>
@@ -301,10 +355,17 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
 
       {modalFrecuencia && (
         <FrequencyModal
-          frecuenciaActual={frecuencia}
+          frecuenciaActual={frecuenciaVigente?.sesiones_por_semana ?? 3}
+          diasActuales={frecuenciaVigente?.dias_semana ?? []}
           nombrePaciente={paciente.nombre}
           onClose={() => setModalFrecuencia(false)}
-          onGuardar={setFrecuencia}
+          onGuardar={async (nuevaFrecuencia, nuevosDias) => {
+            const creada = await api.medico.crearFrecuencia(token!, Number(paciente.id), {
+              sesiones_por_semana: nuevaFrecuencia,
+              dias_semana: nuevosDias,
+            })
+            setHistorialFrecuencia((actual) => [creada, ...actual])
+          }}
         />
       )}
 

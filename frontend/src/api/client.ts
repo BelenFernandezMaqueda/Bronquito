@@ -6,6 +6,8 @@
 import type {
   Evaluacion,
   EvaluacionMuestras,
+  Frecuencia,
+  FrecuenciaCrearBody,
   MedicoLoginBody,
   MedicoPerfil,
   MedicoRegistroBody,
@@ -112,6 +114,10 @@ export const api = {
         `/medicos/me/pacientes/${idPaciente}/evaluaciones/${idEvaluacion}/muestras`,
         { token },
       ),
+    historialFrecuencia: (token: string, idPaciente: number) =>
+      apiFetch<Frecuencia[]>(`/medicos/me/pacientes/${idPaciente}/frecuencia`, { token }),
+    crearFrecuencia: (token: string, idPaciente: number, body: FrecuenciaCrearBody) =>
+      apiFetch<Frecuencia>(`/medicos/me/pacientes/${idPaciente}/frecuencia`, { method: 'POST', body, token }),
   },
 
   paciente: {

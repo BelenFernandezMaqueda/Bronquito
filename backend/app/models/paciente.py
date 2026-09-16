@@ -73,6 +73,7 @@ class Paciente(Base):
     entrenamientos = relationship("Entrenamiento", back_populates="paciente")
     rutina = relationship("Rutina", back_populates="paciente", uselist=False)
     notas = relationship("NotaMedica", back_populates="paciente")
+    frecuencias_recomendadas = relationship("FrecuenciaRecomendada", back_populates="paciente")
 
     @property
     def perfil_completo(self) -> bool:
