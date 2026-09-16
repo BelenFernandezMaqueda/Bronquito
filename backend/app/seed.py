@@ -212,29 +212,46 @@ def seed_if_empty(db: Session) -> None:
             )
         )
 
-    entrenamiento = Entrenamiento(
-        id_paciente=malena.id_paciente,
-        fecha_hora=datetime(2026, 8, 29, 9, 0, tzinfo=timezone.utc),
-        resistencia_programada=35.0,
-        repeticiones_programadas=12,
-        tiempo_descanso=60,
-        posicion_valvula=120,
-        rep_terminadas=12,
-        presion_max=48.5,
-        presion_media_sostenida=41.2,
-        indice_fatiga=8.5,
-        potencia_insp=3.8,
-        trabajo_insp=45.2,
-        volumen_total=18.4,
-        temperatura=23.5,
-        humedad=55.0,
-    )
-    db.add(entrenamiento)
+    entrenamientos_malena = [
+        Entrenamiento(
+            id_paciente=malena.id_paciente,
+            fecha_hora=datetime(2026, 8, 29, 9, 0, tzinfo=timezone.utc),
+            resistencia_programada=35.0,
+            repeticiones_programadas=12,
+            presion_max=48.5,
+            presion_promedio=41.2,
+            indice_fatiga=8.5,
+            potencia_insp=3.8,
+            trabajo=45.2,
+            duty_cycle=42.0,
+            tiempo_entre_reps=3.5,
+            volumen_total=18.4,
+            temperatura=23.5,
+            humedad=55.0,
+        ),
+        Entrenamiento(
+            id_paciente=malena.id_paciente,
+            fecha_hora=datetime(2026, 8, 27, 9, 0, tzinfo=timezone.utc),
+            resistencia_programada=32.0,
+            repeticiones_programadas=12,
+            presion_max=45.0,
+            presion_promedio=38.5,
+            indice_fatiga=11.0,
+            potencia_insp=3.4,
+            trabajo=40.1,
+            duty_cycle=39.5,
+            tiempo_entre_reps=4.0,
+            volumen_total=17.2,
+            temperatura=22.0,
+            humedad=58.0,
+        ),
+    ]
+    db.add_all(entrenamientos_malena)
     db.flush()
 
     db.add_all(
         EntrenamientoGraficar(
-            id_entrenamiento=entrenamiento.id_entrenamiento,
+            id_entrenamiento=entrenamientos_malena[0].id_entrenamiento,
             tiempo=t, volumen=v, flujo=f, presion=p, fase=fase, repeticion=rep,
         )
         for t, v, f, p, fase, rep in [

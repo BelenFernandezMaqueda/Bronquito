@@ -268,6 +268,52 @@ main {
   grid-template-columns: 1fr 1fr;
 }
 
+.chart-carousel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chart-carousel-page {
+  flex: 1;
+  min-width: 0;
+}
+
+.chart-carousel-indicador {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-soft);
+  margin-top: 8px;
+}
+
+.chart-carousel-btn {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: var(--teal-pale);
+  color: var(--teal-deep);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-carousel-btn:hover:not(:disabled) {
+  background: var(--teal);
+  color: #fff;
+}
+
+.chart-carousel-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* ---------- Hero ---------- */
 .hero {
   display: flex;
@@ -731,6 +777,17 @@ section.block {
   font-weight: 800;
   padding: 4px 10px;
   border-radius: 999px;
+}
+
+.tag-clickable {
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.tag-clickable:hover {
+  background: var(--teal);
+  color: #fff;
 }
 
 .btn-icon-pink {

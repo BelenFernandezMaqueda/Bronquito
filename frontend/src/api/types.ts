@@ -66,6 +66,23 @@ export interface EvaluacionMuestras {
   volumen: number[]
 }
 
+export interface Entrenamiento {
+  id_entrenamiento: number
+  fecha_hora: string
+  resistencia_programada: number
+  repeticiones_programadas: number
+  presion_max: number
+  presion_promedio: number
+  indice_fatiga: number
+  potencia_insp: number
+  trabajo: number
+  duty_cycle: number
+  tiempo_entre_reps: number
+  volumen_total: number
+  temperatura: number | null
+  humedad: number | null
+}
+
 /** Una entrada del historial de frecuencia/días recomendados de un paciente. */
 export interface Frecuencia {
   id_frecuencia: number

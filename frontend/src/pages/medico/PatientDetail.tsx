@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { Paciente } from '../../types'
-import type { Evaluacion, Frecuencia } from '../../api/types'
+import type { Entrenamiento, Evaluacion, Frecuencia } from '../../api/types'
 import { ApiError, api } from '../../api/client'
 import { useSession } from '../../auth/session'
-import { EstadoSesionBadge } from '../../components/ui/Badge'
-import { PimTrendChart } from '../../components/ui/PimTrendChart'
+import type { SerieTendencia } from '../../components/ui/TrendChartCarousel'
+import { TrendChartCarousel } from '../../components/ui/TrendChartCarousel'
 import { MonthCalendar } from '../../components/ui/MonthCalendar'
 import { Modal } from '../../components/ui/Modal'
 import { TrashIcon } from '../../components/ui/TrashIcon'
 import { FrequencyModal } from './FrequencyModal'
-import { entrenamientosDe, formatearFecha, formatearDuracion, isoArgentina } from '../../data/mockData'
+import { formatearFecha, isoArgentina } from '../../data/mockData'
 
 type Tab = 'evaluaciones' | 'entrenamiento' | 'calendario'
 
@@ -66,6 +66,32 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
     }
   }, [token, paciente.id])
 
+  const [entrenamientos, setEntrenamientos] = useState<Entrenamiento[]>([])
+  const [cargandoEntrenamientos, setCargandoEntrenamientos] = useState(true)
+  const [errorEntrenamientos, setErrorEntrenamientos] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!token) return
+    let cancelado = false
+    setCargandoEntrenamientos(true)
+    setErrorEntrenamientos(null)
+    api.medico
+      .entrenamientosDe(token, Number(paciente.id))
+      .then((datos) => {
+        if (!cancelado) setEntrenamientos(datos)
+      })
+      .catch((err) => {
+        if (cancelado) return
+        setErrorEntrenamientos(err instanceof ApiError ? err.message : 'No pudimos cargar los entrenamientos.')
+      })
+      .finally(() => {
+        if (!cancelado) setCargandoEntrenamientos(false)
+      })
+    return () => {
+      cancelado = true
+    }
+  }, [token, paciente.id])
+
   useEffect(() => {
     if (!token) return
     let cancelado = false
@@ -97,7 +123,7 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
   }, [evaluaciones])
 
   const ultimaEvaluacion = evaluaciones[0]
-  const entrenamientos = entrenamientosDe(paciente.id)
+  const ultimoEntrenamiento = entrenamientos[0]
   const hoy = new Date()
   const hoyIso = isoArgentina(hoy)
 
@@ -114,7 +140,10 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
   // marca vigente_desde = hoy al crear una nueva).
   const frecuenciaVigente = historialFrecuencia[0]
 
-  const diasConEntrenamiento = useMemo(() => new Set(entrenamientos.map((e) => e.fecha)), [entrenamientos])
+  const diasConEntrenamiento = useMemo(
+    () => new Set(entrenamientos.map((e) => e.fecha_hora.slice(0, 10))),
+    [entrenamientos],
+  )
 
   // Una evaluación por día (si hay espirometría y PIM del mismo día, se prioriza
   // la espirometría) — para saber a qué evaluación llevar al clickear el banderín.
@@ -130,13 +159,53 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
     return mapa
   }, [evaluaciones])
 
+  const PALETA_SERIES = ['#F0459A', '#2FA7A0', '#7C5CF0', '#E0A030', '#3B82F6', '#D1234F', '#1F9D64', '#B9820C']
+
+  /** Arma la lista de SerieTendencia para un carrusel a partir de la config de cada variable. */
+  function construirSeries<T>(
+    datos: T[],
+    fechaDe: (item: T) => string,
+    variables: [nombreCorto: string, etiqueta: string, etiquetaEje: string, unidad: string, valorDe: (item: T) => number | null | undefined][],
+  ): SerieTendencia[] {
+    return variables.map(([nombreCorto, etiqueta, etiquetaEje, unidad, valorDe], i) => {
+      const puntos = datos
+        .map((item) => ({ valor: valorDe(item), fecha: fechaDe(item) }))
+        .filter((p): p is { valor: number; fecha: string } => p.valor != null)
+      return {
+        nombreCorto,
+        titulo: `Evolución de ${etiqueta}`,
+        etiquetaEje,
+        unidad,
+        color: PALETA_SERIES[i % PALETA_SERIES.length],
+        valores: puntos.map((p) => p.valor),
+        fechas: puntos.map((p) => p.fecha),
+      }
+    })
+  }
+
   const evaluacionesCronologicas = [...evaluaciones].reverse()
-  const seriePim = evaluacionesCronologicas
-    .filter((e): e is Evaluacion & { pim: number } => e.pim != null)
-    .map((e) => ({ valor: e.pim, fecha: formatearFecha(e.fecha_hora) }))
-  const serieFvc = evaluacionesCronologicas
-    .filter((e): e is Evaluacion & { fvc: number } => e.fvc != null)
-    .map((e) => ({ valor: e.fvc, fecha: formatearFecha(e.fecha_hora) }))
+  const seriesEvaluaciones = construirSeries(evaluacionesCronologicas, (e) => formatearFecha(e.fecha_hora), [
+    ['PIM', 'PIM', 'PIM (cmH₂O)', 'cmH₂O', (e) => e.pim],
+    ['FVC', 'FVC', 'FVC (L)', 'L', (e) => e.fvc],
+    ['FEV1', 'FEV1', 'FEV1 (L)', 'L', (e) => e.fev1],
+    ['PEF', 'PEF', 'PEF (L/min)', 'L/min', (e) => e.pef],
+    ['FIVC', 'FIVC', 'FIVC (L)', 'L', (e) => e.fivc],
+    ['FIV1', 'FIV1', 'FIV1 (L)', 'L', (e) => e.fiv1],
+  ])
+
+  const entrenamientosCronologicos = [...entrenamientos].reverse()
+  const seriesEntrenamiento = construirSeries(entrenamientosCronologicos, (e) => formatearFecha(e.fecha_hora), [
+    ['Resistencia', 'resistencia programada', 'Resistencia', '', (e) => e.resistencia_programada],
+    ['Repeticiones', 'repeticiones programadas', 'Repeticiones', '', (e) => e.repeticiones_programadas],
+    ['Presión máx.', 'presión máxima', 'Presión máx. (cmH₂O)', 'cmH₂O', (e) => e.presion_max],
+    ['Presión prom.', 'presión promedio', 'Presión prom. (cmH₂O)', 'cmH₂O', (e) => e.presion_promedio],
+    ['Índice de fatiga', 'índice de fatiga', 'Índice de fatiga (%)', '%', (e) => e.indice_fatiga],
+    ['Potencia', 'potencia inspiratoria', 'Potencia insp. (W)', 'W', (e) => e.potencia_insp],
+    ['Trabajo', 'trabajo', 'Trabajo (J)', 'J', (e) => e.trabajo],
+    ['Duty cycle', 'duty cycle', 'Duty cycle (%)', '%', (e) => e.duty_cycle],
+    ['Tiempo entre reps', 'tiempo entre repeticiones', 'Tiempo entre reps (s)', 's', (e) => e.tiempo_entre_reps],
+    ['Volumen total', 'volumen total', 'Volumen total (L)', 'L', (e) => e.volumen_total],
+  ])
 
   return (
     <div className="card">
@@ -161,9 +230,13 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
             <span className="tag">PIM inicial: {paciente.pimInicial} cmH₂O</span>
             <span className="tag">PIM actual: {paciente.pimActual} cmH₂O</span>
             <span className="tag">Resistencia actual: Nivel {paciente.resistenciaActual}</span>
-            <span className="tag">
+            <button
+              className="tag tag-clickable"
+              onClick={() => setModalFrecuencia(true)}
+              title="Modificar frecuencia"
+            >
               Frecuencia: {frecuenciaVigente ? `${frecuenciaVigente.sesiones_por_semana}x/semana` : 'sin definir'}
-            </span>
+            </button>
           </div>
         </div>
       </div>
@@ -180,9 +253,11 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
             Calendario
           </button>
         </div>
-        <button className="btn btn-outline btn-sm" onClick={() => setModalFrecuencia(true)}>
-          Modificar frecuencia
-        </button>
+        {tab === 'calendario' && (
+          <button className="btn btn-outline btn-sm" onClick={() => setModalFrecuencia(true)}>
+            Modificar frecuencia
+          </button>
+        )}
       </div>
 
       {tab === 'evaluaciones' && (
@@ -194,36 +269,7 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
           ) : (
             <>
               {ultimaEvaluacion ? (
-                <div className="grid cols-2">
-                  {seriePim.length > 0 ? (
-                    <PimTrendChart
-                      valores={seriePim.map((p) => p.valor)}
-                      fechas={seriePim.map((p) => p.fecha)}
-                      etiquetaEje="PIM (cmH₂O)"
-                      titulo="Evolución de PIM"
-                      unidad="cmH₂O"
-                      color="#F0459A"
-                    />
-                  ) : (
-                    <div className="chart-wrap">
-                      <p className="empty-state">No hay ningún valor de PIM para graficar.</p>
-                    </div>
-                  )}
-                  {serieFvc.length > 0 ? (
-                    <PimTrendChart
-                      valores={serieFvc.map((p) => p.valor)}
-                      fechas={serieFvc.map((p) => p.fecha)}
-                      etiquetaEje="FVC (L)"
-                      titulo="Evolución de FVC"
-                      unidad="L"
-                      color="#2FA7A0"
-                    />
-                  ) : (
-                    <div className="chart-wrap">
-                      <p className="empty-state">No hay ningún valor de FVC para graficar.</p>
-                    </div>
-                  )}
-                </div>
+                <TrendChartCarousel series={seriesEvaluaciones} />
               ) : (
                 <p className="empty-state">Todavía no hay evaluaciones registradas.</p>
               )}
@@ -290,39 +336,57 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
 
       {tab === 'entrenamiento' && (
         <div role="tabpanel">
-          {entrenamientos.length > 0 ? (
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Duración</th>
-                    <th>Resistencia</th>
-                    <th>WoB (J)</th>
-                    <th>Potencia (W)</th>
-                    <th>Respiraciones</th>
-                    <th>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {entrenamientos.map((e) => (
-                    <tr key={e.id}>
-                      <td>{formatearFecha(e.fecha)}</td>
-                      <td>{formatearDuracion(e.duracionSegundos)}</td>
-                      <td>Nivel {e.resistencia}</td>
-                      <td>{e.wob}</td>
-                      <td>{e.potencia}</td>
-                      <td>{e.respiraciones}</td>
-                      <td>
-                        <EstadoSesionBadge estado={e.estado} />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {cargandoEntrenamientos ? (
+            <p className="empty-state">Cargando entrenamientos…</p>
+          ) : errorEntrenamientos ? (
+            <p className="empty-state">{errorEntrenamientos}</p>
           ) : (
-            <p className="empty-state">Todavía no hay sesiones de entrenamiento registradas.</p>
+            <>
+              {ultimoEntrenamiento ? (
+                <TrendChartCarousel series={seriesEntrenamiento} />
+              ) : (
+                <p className="empty-state">Todavía no hay sesiones de entrenamiento registradas.</p>
+              )}
+
+              {entrenamientos.length > 0 && (
+                <div className="table-wrap mt-16">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Fecha</th>
+                        <th>Resistencia prog.</th>
+                        <th>Reps. prog.</th>
+                        <th>Presión máx. (cmH₂O)</th>
+                        <th>Presión prom. (cmH₂O)</th>
+                        <th>Índice fatiga (%)</th>
+                        <th>Potencia (W)</th>
+                        <th>Trabajo (J)</th>
+                        <th>Duty cycle (%)</th>
+                        <th>Tiempo entre reps (s)</th>
+                        <th>Volumen total (L)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {entrenamientos.map((e) => (
+                        <tr key={e.id_entrenamiento}>
+                          <td>{formatearFecha(e.fecha_hora)}</td>
+                          <td>{e.resistencia_programada}</td>
+                          <td>{e.repeticiones_programadas}</td>
+                          <td>{e.presion_max}</td>
+                          <td>{e.presion_promedio}</td>
+                          <td>{e.indice_fatiga}</td>
+                          <td>{e.potencia_insp}</td>
+                          <td>{e.trabajo}</td>
+                          <td>{e.duty_cycle}</td>
+                          <td>{e.tiempo_entre_reps}</td>
+                          <td>{e.volumen_total}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

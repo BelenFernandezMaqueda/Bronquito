@@ -4,6 +4,7 @@
  */
 
 import type {
+  Entrenamiento,
   Evaluacion,
   EvaluacionMuestras,
   Frecuencia,
@@ -109,6 +110,8 @@ export const api = {
       apiFetch<void>(`/medicos/me/pacientes/${idPaciente}`, { method: 'DELETE', token }),
     evaluacionesDe: (token: string, idPaciente: number) =>
       apiFetch<Evaluacion[]>(`/medicos/me/pacientes/${idPaciente}/evaluaciones`, { token }),
+    entrenamientosDe: (token: string, idPaciente: number) =>
+      apiFetch<Entrenamiento[]>(`/medicos/me/pacientes/${idPaciente}/entrenamientos`, { token }),
     muestrasDeEvaluacion: (token: string, idPaciente: number, idEvaluacion: number) =>
       apiFetch<EvaluacionMuestras>(
         `/medicos/me/pacientes/${idPaciente}/evaluaciones/${idEvaluacion}/muestras`,
