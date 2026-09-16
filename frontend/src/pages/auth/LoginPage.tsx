@@ -42,7 +42,7 @@ export function LoginPage() {
   }
 
   return (
-    <AuthShell titulo="Iniciar sesión" subtitulo="Entrá para ver tu entrenamiento y tus calibraciones.">
+    <AuthShell titulo="Iniciar sesión" subtitulo="Entrá para ver tu entrenamiento y tus evaluaciones.">
       <div className="auth-tabs" role="tablist" aria-label="Tipo de cuenta">
         <button
           role="tab"

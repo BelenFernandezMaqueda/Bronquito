@@ -23,6 +23,10 @@ export function RegistroMedicoPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
+    if (/\d/.test(nombre) || /\d/.test(apellido)) {
+      setError('El nombre y el apellido no pueden contener números.')
+      return
+    }
     if (contrasena !== contrasena2) {
       setError('Las contraseñas no coinciden.')
       return

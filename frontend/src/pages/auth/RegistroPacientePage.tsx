@@ -31,6 +31,10 @@ export function RegistroPacientePage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
+    if (/\d/.test(nombre) || /\d/.test(apellido)) {
+      setError('El nombre y el apellido no pueden contener números.')
+      return
+    }
     if (!/^\d+$/.test(dni)) {
       setError('El DNI solo puede contener números.')
       return

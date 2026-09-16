@@ -14,7 +14,7 @@ export type Adherencia = 'buena' | 'irregular' | 'sin_actividad'
 
 export type EstadoSesion = 'completa' | 'parcial' | 'no_realizada'
 
-export type TipoSesion = 'entrenamiento' | 'calibracion'
+export type TipoSesion = 'entrenamiento' | 'evaluacion'
 
 /** Usuario base: lo que comparten paciente y médico como cuenta. */
 export interface UsuarioBase {
@@ -45,8 +45,8 @@ export interface Medico extends UsuarioBase {
   especialidad: string
 }
 
-/** Una sesión de calibración: mide PIM (presión inspiratoria máxima) y curva flujo-volumen. */
-export interface SesionCalibracion {
+/** Una sesión de evaluación: mide PIM (presión inspiratoria máxima) y curva flujo-volumen. */
+export interface SesionEvaluacion {
   id: string
   pacienteId: string
   fecha: string
@@ -55,7 +55,7 @@ export interface SesionCalibracion {
   /** Puntos de la curva flujo-volumen, normalizados para graficar (x: volumen, y: flujo). */
   curvaFlujoVolumen: Array<{ x: number; y: number }>
   observaciones?: string
-  /** true si fue una calibración en consultorio con el médico presente. */
+  /** true si fue una evaluación en consultorio con el médico presente. */
   enConsultorio: boolean
 }
 

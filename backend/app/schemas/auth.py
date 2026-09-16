@@ -4,6 +4,12 @@ from typing import Literal
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
+def validar_nombre_sin_numeros(valor: str) -> str:
+    if any(caracter.isdigit() for caracter in valor):
+        raise ValueError("El nombre y el apellido no pueden contener números.")
+    return valor
+
+
 # --- Médicos ---------------------------------------------------------------
 
 
@@ -15,6 +21,11 @@ class MedicoRegistro(BaseModel):
     nombre: str = Field(min_length=1, max_length=80)
     apellido: str = Field(min_length=1, max_length=80)
     acepto_terminos: bool
+
+    @field_validator("nombre", "apellido")
+    @classmethod
+    def nombre_sin_numeros(cls, valor: str) -> str:
+        return validar_nombre_sin_numeros(valor)
 
     @field_validator("acepto_terminos")
     @classmethod
@@ -52,6 +63,11 @@ class PacienteRegistro(BaseModel):
     sexo: Literal["F", "M", "X"]
     fumador: bool = False
     acepto_terminos: bool
+
+    @field_validator("nombre", "apellido")
+    @classmethod
+    def nombre_sin_numeros(cls, valor: str) -> str:
+        return validar_nombre_sin_numeros(valor)
 
     @field_validator("acepto_terminos")
     @classmethod

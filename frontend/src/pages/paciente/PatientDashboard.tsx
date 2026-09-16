@@ -5,7 +5,7 @@ import { MonthCalendar } from '../../components/ui/MonthCalendar'
 import { DeviceSessionModal } from '../../components/ui/DeviceSessionModal'
 import {
   entrenamientosDe,
-  calibracionesDe,
+  evaluacionesDe,
   rachaSemanalDe,
   resumenProgresoDe,
   formatearFecha,
@@ -21,17 +21,17 @@ type SubVista = 'resumen' | 'calendario' | 'historial'
 
 export function PatientDashboard() {
   const [subVista, setSubVista] = useState<SubVista>('resumen')
-  const [sesionAbierta, setSesionAbierta] = useState<'entrenamiento' | 'calibracion' | null>(null)
+  const [sesionAbierta, setSesionAbierta] = useState<'entrenamiento' | 'evaluacion' | null>(null)
 
   const { perfil } = useSession()
   const paciente = pacientes.find((p) => p.id === pacienteActualId)!
   const racha = rachaSemanalDe(pacienteActualId)
   const resumen = resumenProgresoDe(pacienteActualId)
   const sesiones = entrenamientosDe(pacienteActualId)
-  const calibraciones = calibracionesDe(pacienteActualId)
+  const evaluaciones = evaluacionesDe(pacienteActualId)
 
   const diasConEntrenamiento = useMemo(() => new Set(sesiones.map((s) => s.fecha)), [sesiones])
-  const diasConEvaluacion = useMemo(() => new Set(calibraciones.map((s) => s.fecha)), [calibraciones])
+  const diasConEvaluacion = useMemo(() => new Set(evaluaciones.map((s) => s.fecha)), [evaluaciones])
 
   // El nombre sale de la sesión real; el resto del dashboard todavía es mock.
   const primerNombre =
@@ -137,16 +137,16 @@ export function PatientDashboard() {
 
           <section className="block">
             <div className="block-title">
-              <h3>Calibraciones</h3>
+              <h3>Evaluaciones</h3>
             </div>
             <div className="card">
               <p style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginBottom: 14 }}>
-                Tu última calibración fue el {calibraciones[0] ? formatearFecha(calibraciones[0].fecha) : '—'}. La
-                calibración mide qué tan fuerte y eficiente es tu respiración para ajustar la
+                Tu última evaluación fue el {evaluaciones[0] ? formatearFecha(evaluaciones[0].fecha) : '—'}. La
+                evaluación mide qué tan fuerte y eficiente es tu respiración para ajustar la
                 resistencia del dispositivo.
               </p>
-              <button className="btn btn-outline btn-sm" onClick={() => setSesionAbierta('calibracion')}>
-                Iniciar calibración
+              <button className="btn btn-outline btn-sm" onClick={() => setSesionAbierta('evaluacion')}>
+                Iniciar evaluación
               </button>
             </div>
           </section>
