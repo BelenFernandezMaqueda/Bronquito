@@ -15,6 +15,7 @@ Pacientes de prueba (dni / pin):
 """
 
 import csv
+import math
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -45,6 +46,34 @@ def _muestras_espirometria_102(ensayo: int):
             if int(fila["Trial"]) == ensayo
         ]
     return sorted(muestras)
+
+
+def _muestras_pim(pico: float):
+    """
+    Curva sintética de una maniobra de PIM (presión inspiratoria máxima):
+    reposo, subida a `pico` (cmH₂O), sostenida ~1s y vuelta a reposo.
+    No hay flujo ni volumen medidos (válvula cerrada), quedan en 0.
+    """
+    paso = 0.02
+    duracion = 3.0
+    n = int(duracion / paso)
+    tiempos = [round(i * paso, 2) for i in range(n)]
+    presiones = []
+    for t in tiempos:
+        if t < 0.3:
+            p = 0.0
+        elif t < 0.8:
+            frac = (t - 0.3) / 0.5
+            p = pico * (1 - math.cos(frac * math.pi)) / 2
+        elif t < 1.8:
+            p = pico
+        elif t < 2.3:
+            frac = (t - 1.8) / 0.5
+            p = pico * (1 + math.cos(frac * math.pi)) / 2
+        else:
+            p = 0.0
+        presiones.append(round(p, 2))
+    return tiempos, presiones
 
 
 def seed_if_empty(db: Session) -> None:
@@ -154,29 +183,75 @@ def seed_if_empty(db: Session) -> None:
             )
         )
 
-    entrenamiento = Entrenamiento(
-        id_paciente=malena.id_paciente,
-        fecha_hora=datetime(2026, 8, 29, 9, 0, tzinfo=timezone.utc),
-        resistencia_programada=35.0,
-        repeticiones_programadas=12,
-        tiempo_descanso=60,
-        posicion_valvula=120,
-        rep_terminadas=12,
-        presion_max=48.5,
-        presion_media_sostenida=41.2,
-        indice_fatiga=8.5,
-        potencia_insp=3.8,
-        trabajo_insp=45.2,
-        volumen_total=18.4,
-        temperatura=23.5,
-        humedad=55.0,
-    )
-    db.add(entrenamiento)
+    # Una evaluación de PIM por cada visita de espirometría, misma sesión de
+    # consultorio: se guarda el mismo `fecha_hora` exacto que su espirometría
+    # (se captura una sola vez al arrancar la sesión), así el front puede
+    # reconocer que forman parte de la misma evaluación.
+    for fecha_hora, pico in [
+        (hoy, 58.0),
+        (anteayer, 52.0),
+    ]:
+        evaluacion_pim = Evaluacion(
+            id_paciente=malena.id_paciente,
+            tipo=TipoEvaluacion.pim_pem,
+            fecha_hora=fecha_hora,
+            pim=pico,
+            temperatura=23.0, humedad=52.0,
+        )
+        db.add(evaluacion_pim)
+        db.flush()
+
+        tiempos, presiones = _muestras_pim(pico)
+        db.add(
+            EvaluacionMuestra(
+                id_evaluacion=evaluacion_pim.id_evaluacion,
+                tiempo=tiempos,
+                flujo=[0.0] * len(tiempos),
+                presion=presiones,
+                volumen=[0.0] * len(tiempos),
+            )
+        )
+
+    entrenamientos_malena = [
+        Entrenamiento(
+            id_paciente=malena.id_paciente,
+            fecha_hora=datetime(2026, 8, 29, 9, 0, tzinfo=timezone.utc),
+            resistencia_programada=35.0,
+            repeticiones_programadas=12,
+            presion_max=48.5,
+            presion_promedio=41.2,
+            indice_fatiga=8.5,
+            potencia_insp=3.8,
+            trabajo=45.2,
+            duty_cycle=42.0,
+            tiempo_entre_reps=3.5,
+            volumen_total=18.4,
+            temperatura=23.5,
+            humedad=55.0,
+        ),
+        Entrenamiento(
+            id_paciente=malena.id_paciente,
+            fecha_hora=datetime(2026, 8, 27, 9, 0, tzinfo=timezone.utc),
+            resistencia_programada=32.0,
+            repeticiones_programadas=12,
+            presion_max=45.0,
+            presion_promedio=38.5,
+            indice_fatiga=11.0,
+            potencia_insp=3.4,
+            trabajo=40.1,
+            duty_cycle=39.5,
+            tiempo_entre_reps=4.0,
+            volumen_total=17.2,
+            temperatura=22.0,
+            humedad=58.0,
+        ),
+    ]
+    db.add_all(entrenamientos_malena)
     db.flush()
 
     db.add_all(
         EntrenamientoGraficar(
-            id_entrenamiento=entrenamiento.id_entrenamiento,
+            id_entrenamiento=entrenamientos_malena[0].id_entrenamiento,
             tiempo=t, volumen=v, flujo=f, presion=p, fase=fase, repeticion=rep,
         )
         for t, v, f, p, fase, rep in [

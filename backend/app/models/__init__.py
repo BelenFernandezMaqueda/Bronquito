@@ -7,6 +7,7 @@ crear las tablas, y para que las relaciones declaradas como strings
 
 from app.models.entrenamiento import Entrenamiento, EntrenamientoGraficar
 from app.models.evaluacion import Evaluacion, EvaluacionMuestra
+from app.models.frecuencia_recomendada import FrecuenciaRecomendada
 from app.models.medico import Medico
 from app.models.medico_paciente import MedicoPaciente
 from app.models.nota_medica import NotaMedica
@@ -23,4 +24,7 @@ __all__ = [
     "EntrenamientoGraficar",  # tabla entrenamientos_graficar
     "Rutina",  # tabla rutina
     "NotaMedica",  # tabla notas_medicas
+    # No es una de las 9 tablas del documento de arquitectura — es exclusiva
+    # de la web, no la sincroniza el dispositivo.
+    "FrecuenciaRecomendada",  # tabla frecuencia_recomendada
 ]

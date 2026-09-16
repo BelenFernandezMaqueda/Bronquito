@@ -13,6 +13,7 @@ import {
   pacientes,
   pacienteActualId,
   HOY,
+  isoArgentina,
 } from '../../data/mockData'
 import { useSession } from '../../auth/session'
 
@@ -29,10 +30,8 @@ export function PatientDashboard() {
   const sesiones = entrenamientosDe(pacienteActualId)
   const calibraciones = calibracionesDe(pacienteActualId)
 
-  const fechasConSesion = useMemo(
-    () => new Set([...sesiones, ...calibraciones].map((s) => s.fecha)),
-    [sesiones, calibraciones],
-  )
+  const diasConEntrenamiento = useMemo(() => new Set(sesiones.map((s) => s.fecha)), [sesiones])
+  const diasConEvaluacion = useMemo(() => new Set(calibraciones.map((s) => s.fecha)), [calibraciones])
 
   // El nombre sale de la sesión real; el resto del dashboard todavía es mock.
   const primerNombre =
@@ -165,8 +164,9 @@ export function PatientDashboard() {
           <MonthCalendar
             anio={HOY.getFullYear()}
             mes={HOY.getMonth()}
-            fechasConSesion={fechasConSesion}
-            hoyIso={HOY.toISOString().slice(0, 10)}
+            diasConEntrenamiento={diasConEntrenamiento}
+            diasConEvaluacion={diasConEvaluacion}
+            hoyIso={isoArgentina(HOY)}
           />
         </div>
       )}

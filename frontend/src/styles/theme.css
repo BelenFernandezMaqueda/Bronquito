@@ -243,7 +243,7 @@ textarea:focus-visible,
 
 /* ---------- Layout ---------- */
 main {
-  max-width: 1180px;
+  max-width: 1600px;
   margin: 0 auto;
   padding: 28px 32px 60px;
 }
@@ -265,7 +265,53 @@ main {
 }
 
 .cols-2 {
-  grid-template-columns: 1.3fr 1fr;
+  grid-template-columns: 1fr 1fr;
+}
+
+.chart-carousel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chart-carousel-page {
+  flex: 1;
+  min-width: 0;
+}
+
+.chart-carousel-indicador {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-soft);
+  margin-top: 8px;
+}
+
+.chart-carousel-btn {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: var(--teal-pale);
+  color: var(--teal-deep);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-carousel-btn:hover:not(:disabled) {
+  background: var(--teal);
+  color: #fff;
+}
+
+.chart-carousel-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* ---------- Hero ---------- */
@@ -329,6 +375,11 @@ main {
 
 .btn-pink {
   background: var(--pink);
+  color: #fff;
+}
+
+.btn-red {
+  background: var(--bad);
   color: #fff;
 }
 
@@ -695,8 +746,16 @@ section.block {
   flex-wrap: wrap;
 }
 
-.detail-id h2 {
-  margin: 0 0 4px;
+.detail-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.detail-title-row h2 {
+  margin: 0;
   font-size: 22px;
 }
 
@@ -720,16 +779,15 @@ section.block {
   border-radius: 999px;
 }
 
-.detail-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+.tag-clickable {
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
 }
 
-.detail-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 4px;
+.tag-clickable:hover {
+  background: var(--teal);
+  color: #fff;
 }
 
 .btn-icon-pink {
@@ -757,6 +815,15 @@ section.block {
   height: 16px;
 }
 
+.tabs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
 .tabs {
   display: flex;
   gap: 4px;
@@ -764,7 +831,6 @@ section.block {
   border-radius: 999px;
   padding: 4px;
   width: fit-content;
-  margin-bottom: 18px;
   max-width: 100%;
   overflow-x: auto;
 }
@@ -817,6 +883,81 @@ tr:last-child td {
   border-bottom: none;
 }
 
+.table-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.signal-page-bg {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #ddf6fb, #b9e9f2);
+}
+
+.signal-grid {
+  grid-template-rows: repeat(2, 1fr);
+  overflow: hidden;
+}
+
+.signal-grid-rows-1 {
+  grid-template-rows: 1fr;
+}
+
+.signal-grid .chart-wrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: #fff;
+  padding: 10px 12px 4px;
+}
+
+.signal-grid .chart-wrap svg {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: block;
+}
+
+.signal-chart-title {
+  flex: none;
+  text-align: center;
+  font-family: 'Baloo 2';
+  font-weight: 800;
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.signal-viewer-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.signal-viewer-header h3 {
+  margin: 0 0 0 4px;
+  font-size: 16px;
+}
+
+.signal-tipo-toggle {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 800;
+  color: var(--teal-deep);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.signal-tipo-toggle:hover {
+  color: var(--pink-deep);
+}
+
 .chart-wrap {
   background: var(--teal-pale);
   border-radius: 16px;
@@ -830,6 +971,13 @@ tr:last-child td {
   margin-top: 4px;
 }
 
+.trend-chart-range {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -838,22 +986,28 @@ tr:last-child td {
 }
 
 .cal-cell {
-  aspect-ratio: 1;
   border-radius: 10px;
   background: var(--teal-pale);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: 12px;
+  padding: 6px 4px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--ink-soft);
   position: relative;
   border: none;
+  overflow: hidden;
 }
 
-.cal-cell.has-session {
-  background: var(--teal);
-  color: #fff;
+.cal-day-number {
+  line-height: 1;
+  flex: none;
+}
+
+.cal-cell.is-recomendado {
+  background: var(--pink-soft);
+  color: var(--pink-deep);
 }
 
 .cal-cell.empty {
@@ -865,11 +1019,84 @@ tr:last-child td {
   outline-offset: 1px;
 }
 
+.cal-ribbons {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  min-height: 0;
+}
+
+.cal-ribbon {
+  width: 100%;
+  border: none;
+  font-family: 'Baloo 2';
+  font-weight: 800;
+  font-size: clamp(9px, 1.1vw, 13px);
+  line-height: 1.3;
+  color: #fff;
+  padding: 4px 3px;
+  border-radius: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+button.cal-ribbon {
+  cursor: pointer;
+}
+
+.cal-ribbon-evaluacion {
+  background: var(--teal-deep);
+}
+
+.cal-ribbon-entrenamiento {
+  background: var(--pink);
+}
+
 .cal-dow {
   text-align: center;
   font-size: 11px;
   font-weight: 800;
   color: var(--ink-soft);
+}
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.cal-titulo {
+  font-weight: 800;
+  min-width: 140px;
+  text-align: center;
+}
+
+.cal-nav-btn {
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: var(--teal-pale);
+  color: var(--teal-deep);
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cal-nav-btn:hover {
+  background: var(--teal);
+  color: #fff;
 }
 
 /* ---------- Modal ---------- */
@@ -938,6 +1165,7 @@ tr:last-child td {
 .field input[type='text'],
 .field input[type='email'],
 .field input[type='number'],
+.field input[type='password'],
 .field select {
   width: 100%;
   padding: 10px 12px;
@@ -946,6 +1174,35 @@ tr:last-child td {
   background: var(--bg);
   font-size: 14px;
   color: var(--ink);
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 42px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  color: var(--teal-deep);
 }
 
 .freq-picker {
@@ -969,6 +1226,12 @@ tr:last-child td {
   background: var(--teal);
   border-color: var(--teal);
   color: #fff;
+}
+
+.field-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--warn);
 }
 
 @keyframes spin {

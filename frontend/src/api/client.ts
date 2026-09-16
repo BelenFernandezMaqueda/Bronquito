@@ -4,6 +4,11 @@
  */
 
 import type {
+  Entrenamiento,
+  Evaluacion,
+  EvaluacionMuestras,
+  Frecuencia,
+  FrecuenciaCrearBody,
   MedicoLoginBody,
   MedicoPerfil,
   MedicoRegistroBody,
@@ -12,6 +17,7 @@ import type {
   PacientePerfilUpdateBody,
   PacienteRegistroBody,
   RecuperacionOut,
+  Rutina,
   TokenOut,
 } from './types'
 
@@ -103,6 +109,21 @@ export const api = {
       apiFetch<PacientePerfil>('/medicos/me/vincular', { method: 'POST', body: { dni, pin }, token }),
     desvincularPaciente: (token: string, idPaciente: number) =>
       apiFetch<void>(`/medicos/me/pacientes/${idPaciente}`, { method: 'DELETE', token }),
+    evaluacionesDe: (token: string, idPaciente: number) =>
+      apiFetch<Evaluacion[]>(`/medicos/me/pacientes/${idPaciente}/evaluaciones`, { token }),
+    entrenamientosDe: (token: string, idPaciente: number) =>
+      apiFetch<Entrenamiento[]>(`/medicos/me/pacientes/${idPaciente}/entrenamientos`, { token }),
+    rutinaDe: (token: string, idPaciente: number) =>
+      apiFetch<Rutina | null>(`/medicos/me/pacientes/${idPaciente}/rutina`, { token }),
+    muestrasDeEvaluacion: (token: string, idPaciente: number, idEvaluacion: number) =>
+      apiFetch<EvaluacionMuestras>(
+        `/medicos/me/pacientes/${idPaciente}/evaluaciones/${idEvaluacion}/muestras`,
+        { token },
+      ),
+    historialFrecuencia: (token: string, idPaciente: number) =>
+      apiFetch<Frecuencia[]>(`/medicos/me/pacientes/${idPaciente}/frecuencia`, { token }),
+    crearFrecuencia: (token: string, idPaciente: number, body: FrecuenciaCrearBody) =>
+      apiFetch<Frecuencia>(`/medicos/me/pacientes/${idPaciente}/frecuencia`, { method: 'POST', body, token }),
   },
 
   paciente: {

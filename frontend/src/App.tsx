@@ -13,6 +13,7 @@ import { ResetearPage } from './pages/auth/ResetearPage'
 import { CompletarPerfilPage } from './pages/paciente/CompletarPerfilPage'
 import { PatientDashboard } from './pages/paciente/PatientDashboard'
 import { DoctorView } from './pages/medico/DoctorView'
+import { EvaluationSignalPage } from './pages/medico/EvaluationSignalPage'
 
 /** ¿El paciente logueado todavía tiene que completar su perfil? */
 function pacienteIncompleto(perfil: Perfil | null): boolean {
@@ -111,6 +112,20 @@ export default function App() {
         element={
           <SoloAutenticados>
             <Dashboard />
+          </SoloAutenticados>
+        }
+      />
+
+      {/* Visor de señales: página aparte, sin header, sin ficha del paciente ni listado al costado. */}
+      <Route
+        path="/medico/pacientes/:idPaciente/evaluaciones/:idEvaluacion"
+        element={
+          <SoloAutenticados>
+            <div className="signal-page-bg">
+              <main>
+                <EvaluationSignalPage />
+              </main>
+            </div>
           </SoloAutenticados>
         }
       />

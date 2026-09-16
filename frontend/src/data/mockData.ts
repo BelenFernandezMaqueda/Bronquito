@@ -20,6 +20,17 @@ export function formatearFecha(fecha: string | Date, opts: Intl.DateTimeFormatOp
   return d.toLocaleDateString('es-AR', opts).replace('.', '')
 }
 
+const FORMATO_ISO_ARGENTINA = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })
+
+/**
+ * Fecha (YYYY-MM-DD) tal como es en Argentina en este instante. Nunca uses
+ * `.toISOString()` para esto: convierte a UTC, y de noche (hora argentina)
+ * eso ya cayó en el día siguiente.
+ */
+export function isoArgentina(fecha: Date): string {
+  return FORMATO_ISO_ARGENTINA.format(fecha)
+}
+
 export function diasDesde(fecha: string): number {
   const ms = HOY.getTime() - new Date(fecha).getTime()
   return Math.max(0, Math.round(ms / (1000 * 60 * 60 * 24)))
@@ -303,12 +314,12 @@ export function rachaSemanalDe(pacienteId: string): DiaRacha[] {
   return DIAS_SEMANA.map((etiqueta, i) => {
     const fecha = new Date(lunes)
     fecha.setDate(lunes.getDate() + i)
-    const iso = fecha.toISOString().slice(0, 10)
+    const iso = isoArgentina(fecha)
     return {
       fecha: iso,
       etiqueta,
       completado: fechasConSesion.has(iso),
-      esHoy: iso === HOY.toISOString().slice(0, 10),
+      esHoy: iso === isoArgentina(HOY),
     }
   })
 }
@@ -319,7 +330,7 @@ export function rachaActualDias(pacienteId: string): number {
   )
   let racha = 0
   const cursor = new Date(HOY)
-  while (fechasConSesion.has(cursor.toISOString().slice(0, 10))) {
+  while (fechasConSesion.has(isoArgentina(cursor))) {
     racha++
     cursor.setDate(cursor.getDate() - 1)
   }

@@ -43,6 +43,65 @@ export interface PacientePerfil {
   perfil_completo: boolean
 }
 
+export type TipoEvaluacion = 'ESPIROMETRIA' | 'PIM_PEM'
+
+export interface Evaluacion {
+  id_evaluacion: number
+  tipo: TipoEvaluacion
+  fecha_hora: string
+  fvc: number | null
+  fev1: number | null
+  pef: number | null
+  fivc: number | null
+  fiv1: number | null
+  pim: number | null
+  temperatura: number | null
+  humedad: number | null
+}
+
+export interface EvaluacionMuestras {
+  tiempo: number[]
+  flujo: number[]
+  presion: number[]
+  volumen: number[]
+}
+
+export interface Entrenamiento {
+  id_entrenamiento: number
+  fecha_hora: string
+  resistencia_programada: number
+  repeticiones_programadas: number
+  presion_max: number
+  presion_promedio: number
+  indice_fatiga: number
+  potencia_insp: number
+  trabajo: number
+  duty_cycle: number
+  tiempo_entre_reps: number
+  volumen_total: number
+  temperatura: number | null
+  humedad: number | null
+}
+
+/** La rutina activa de un paciente ahora mismo. */
+export interface Rutina {
+  resistencia_activa: number
+  tiempo_descanso: number
+  repeticiones: number
+  modificado_por: 'ALGORITMO' | 'MEDICO'
+  fecha_actualizacion: string
+}
+
+/** Una entrada del historial de frecuencia/días recomendados de un paciente. */
+export interface Frecuencia {
+  id_frecuencia: number
+  sesiones_por_semana: number
+  /** Días de la semana recomendados (0 = lunes ... 6 = domingo). */
+  dias_semana: number[]
+  vigente_desde: string
+  creado_en: string
+}
+
 // --- Request bodies -------------------------------------------------------
 
 export interface MedicoLoginBody {
@@ -87,4 +146,10 @@ export interface PacientePerfilUpdateBody {
   sexo?: Sexo
   fumador?: boolean
   acepto_terminos?: boolean
+}
+
+export interface FrecuenciaCrearBody {
+  sesiones_por_semana: number
+  /** Días de la semana recomendados (0 = lunes ... 6 = domingo). */
+  dias_semana: number[]
 }

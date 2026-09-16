@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 
 import { ApiError, api } from '../../api/client'
 import { useSession } from '../../auth/session'
+import { PasswordField } from '../../components/ui/PasswordField'
 import { AuthShell } from './AuthShell'
 
 export function RegistroMedicoPage() {
@@ -87,28 +88,22 @@ export function RegistroMedicoPage() {
             required
           />
         </div>
-        <div className="field">
-          <label htmlFor="contrasena">Contraseña (mín. 8 caracteres)</label>
-          <input
-            id="contrasena"
-            type="password"
-            autoComplete="new-password"
-            value={contrasena}
-            onChange={(e) => setContrasena(e.target.value)}
-            required
-          />
-        </div>
-        <div className="field">
-          <label htmlFor="contrasena2">Repetir contraseña</label>
-          <input
-            id="contrasena2"
-            type="password"
-            autoComplete="new-password"
-            value={contrasena2}
-            onChange={(e) => setContrasena2(e.target.value)}
-            required
-          />
-        </div>
+        <PasswordField
+          id="contrasena"
+          label="Contraseña (mín. 8 caracteres)"
+          autoComplete="new-password"
+          value={contrasena}
+          onChange={(e) => setContrasena(e.target.value)}
+          required
+        />
+        <PasswordField
+          id="contrasena2"
+          label="Repetir contraseña"
+          autoComplete="new-password"
+          value={contrasena2}
+          onChange={(e) => setContrasena2(e.target.value)}
+          required
+        />
 
         <label className="field-check">
           <input type="checkbox" checked={acepto} onChange={(e) => setAcepto(e.target.checked)} />

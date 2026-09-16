@@ -6,13 +6,33 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_medico
 from app.core.security import verificar_secreto
+from app.core.timezone import hoy_argentina
+from app.models.entrenamiento import Entrenamiento
+from app.models.evaluacion import Evaluacion, EvaluacionMuestra
+from app.models.frecuencia_recomendada import FrecuenciaRecomendada
 from app.models.medico import Medico
 from app.models.medico_paciente import MedicoPaciente
 from app.models.paciente import Paciente
+from app.models.rutina import Rutina
+from app.schemas.entrenamiento import EntrenamientoOut
+from app.schemas.evaluacion import EvaluacionMuestraOut, EvaluacionOut
+from app.schemas.frecuencia import FrecuenciaCrearRequest, FrecuenciaOut
 from app.schemas.medico import MedicoPerfilOut, VincularPacienteRequest
 from app.schemas.paciente import PacientePerfilOut
+from app.schemas.rutina import RutinaOut
 
 router = APIRouter(prefix="/medicos", tags=["medicos"])
+
+
+def _exigir_vinculo(medico: Medico, id_paciente: int, db: Session) -> None:
+    """Corta con 403 si ESTE médico no tiene a `id_paciente` vinculado."""
+    vinculado = (
+        db.query(MedicoPaciente)
+        .filter(MedicoPaciente.id_medico == medico.id_medico, MedicoPaciente.id_paciente == id_paciente)
+        .first()
+    )
+    if vinculado is None:
+        raise HTTPException(status_code=403, detail="No tenés a ese paciente vinculado.")
 
 
 @router.get("/me", response_model=MedicoPerfilOut)
@@ -91,3 +111,129 @@ def desvincular_paciente(
 
     db.delete(vinculo)
     db.commit()
+
+
+@router.get("/me/pacientes/{id_paciente}/evaluaciones", response_model=list[EvaluacionOut])
+def evaluaciones_de_paciente(
+    id_paciente: int,
+    medico: Medico = Depends(get_current_medico),
+    db: Session = Depends(get_db),
+):
+    """Evaluaciones (espirometría/PIM) de un paciente vinculado a ESTE médico, más recientes primero."""
+    _exigir_vinculo(medico, id_paciente, db)
+    return (
+        db.query(Evaluacion)
+        .filter(Evaluacion.id_paciente == id_paciente)
+        .order_by(Evaluacion.fecha_hora.desc())
+        .all()
+    )
+
+
+@router.get("/me/pacientes/{id_paciente}/entrenamientos", response_model=list[EntrenamientoOut])
+def entrenamientos_de_paciente(
+    id_paciente: int,
+    medico: Medico = Depends(get_current_medico),
+    db: Session = Depends(get_db),
+):
+    """Entrenamientos de un paciente vinculado a ESTE médico, más recientes primero."""
+    _exigir_vinculo(medico, id_paciente, db)
+    return (
+        db.query(Entrenamiento)
+        .filter(Entrenamiento.id_paciente == id_paciente)
+        .order_by(Entrenamiento.fecha_hora.desc())
+        .all()
+    )
+
+
+@router.get("/me/pacientes/{id_paciente}/rutina", response_model=RutinaOut | None)
+def rutina_de_paciente(
+    id_paciente: int,
+    medico: Medico = Depends(get_current_medico),
+    db: Session = Depends(get_db),
+):
+    """
+    Rutina activa de un paciente vinculado a ESTE médico. `None` si todavía
+    no tiene ninguna (por ejemplo, se registró por la web y nunca se conectó
+    al dispositivo ni el médico le cargó una).
+    """
+    _exigir_vinculo(medico, id_paciente, db)
+    return db.query(Rutina).filter(Rutina.id_paciente == id_paciente).first()
+
+
+@router.get(
+    "/me/pacientes/{id_paciente}/evaluaciones/{id_evaluacion}/muestras",
+    response_model=EvaluacionMuestraOut,
+)
+def muestras_de_evaluacion(
+    id_paciente: int,
+    id_evaluacion: int,
+    medico: Medico = Depends(get_current_medico),
+    db: Session = Depends(get_db),
+):
+    """La curva cruda de una evaluación puntual, para graficar flujo/volumen/presión."""
+    _exigir_vinculo(medico, id_paciente, db)
+
+    evaluacion = (
+        db.query(Evaluacion)
+        .filter(Evaluacion.id_evaluacion == id_evaluacion, Evaluacion.id_paciente == id_paciente)
+        .first()
+    )
+    if evaluacion is None:
+        raise HTTPException(status_code=404, detail="No existe esa evaluación para ese paciente.")
+
+    muestras = (
+        db.query(EvaluacionMuestra).filter(EvaluacionMuestra.id_evaluacion == id_evaluacion).first()
+    )
+    if muestras is None:
+        raise HTTPException(status_code=404, detail="Esa evaluación no tiene curva cargada.")
+
+    return muestras
+
+
+@router.get("/me/pacientes/{id_paciente}/frecuencia", response_model=list[FrecuenciaOut])
+def historial_frecuencia(
+    id_paciente: int,
+    medico: Medico = Depends(get_current_medico),
+    db: Session = Depends(get_db),
+):
+    """
+    Historial de frecuencia/días recomendados de un paciente. Es del
+    paciente, no de este médico: si tiene más de un médico vinculado, todos
+    ven el mismo historial completo (más recientes primero).
+    """
+    _exigir_vinculo(medico, id_paciente, db)
+    return (
+        db.query(FrecuenciaRecomendada)
+        .filter(FrecuenciaRecomendada.id_paciente == id_paciente)
+        .order_by(FrecuenciaRecomendada.vigente_desde.desc(), FrecuenciaRecomendada.creado_en.desc())
+        .all()
+    )
+
+
+@router.post("/me/pacientes/{id_paciente}/frecuencia", response_model=FrecuenciaOut, status_code=201)
+def crear_frecuencia(
+    id_paciente: int,
+    payload: FrecuenciaCrearRequest,
+    medico: Medico = Depends(get_current_medico),
+    db: Session = Depends(get_db),
+):
+    """
+    Agrega una entrada nueva al historial (no pisa las anteriores), vigente
+    desde hoy. `id_medico` queda guardado solo para saber quién hizo el
+    cambio — no filtra qué ven los demás médicos vinculados a este paciente.
+    """
+    _exigir_vinculo(medico, id_paciente, db)
+
+    frecuencia = FrecuenciaRecomendada(
+        id_paciente=id_paciente,
+        id_medico=medico.id_medico,
+        sesiones_por_semana=payload.sesiones_por_semana,
+        dias_semana=payload.dias_semana,
+        vigente_desde=hoy_argentina(),
+        creado_en=datetime.now(timezone.utc),
+    )
+    db.add(frecuencia)
+    db.commit()
+    db.refresh(frecuencia)
+
+    return frecuencia

@@ -17,15 +17,14 @@ class Entrenamiento(Base):
 
     resistencia_programada: Mapped[float] = mapped_column(Float)
     repeticiones_programadas: Mapped[int] = mapped_column(Integer)
-    tiempo_descanso: Mapped[int] = mapped_column(Integer)  # segundos
-    posicion_valvula: Mapped[float | None] = mapped_column(Float, nullable=True)
 
-    rep_terminadas: Mapped[int] = mapped_column(Integer)
     presion_max: Mapped[float] = mapped_column(Float)
-    presion_media_sostenida: Mapped[float] = mapped_column(Float)
+    presion_promedio: Mapped[float] = mapped_column(Float)
     indice_fatiga: Mapped[float] = mapped_column(Float)  # %
     potencia_insp: Mapped[float] = mapped_column(Float)  # Watts
-    trabajo_insp: Mapped[float] = mapped_column(Float)  # Joules
+    trabajo: Mapped[float] = mapped_column(Float)  # Joules
+    duty_cycle: Mapped[float] = mapped_column(Float)  # % del ciclo en esfuerzo
+    tiempo_entre_reps: Mapped[float] = mapped_column(Float)  # segundos
     volumen_total: Mapped[float] = mapped_column(Float)  # Litros
 
     temperatura: Mapped[float | None] = mapped_column(Float, nullable=True)
