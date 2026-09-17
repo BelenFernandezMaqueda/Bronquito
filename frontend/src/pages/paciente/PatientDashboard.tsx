@@ -21,7 +21,12 @@ import type { Frecuencia } from '../../api/types'
 type SubVista = 'resumen' | 'calendario' | 'historial'
 
 const DIAS_SEMANA_CORTOS = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']
+const DIAS_SEMANA = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
 const INTERVALO_ACTUALIZACION_FRECUENCIA_MS = 30_000
+
+function diaDeSemana(fecha: Date): number {
+  return (fecha.getDay() + 6) % 7 // 0 = lunes
+}
 
 export function PatientDashboard() {
   const [subVista, setSubVista] = useState<SubVista>('resumen')
@@ -41,21 +46,31 @@ export function PatientDashboard() {
     (perfil?.rol === 'paciente' && perfil.datos.nombre) || paciente.nombre.split(' ')[0]
 
   const [historialFrecuencia, setHistorialFrecuencia] = useState<Frecuencia[]>([])
+  const [frecuenciaCargada, setFrecuenciaCargada] = useState(false)
+  const [errorFrecuencia, setErrorFrecuencia] = useState(false)
 
   useEffect(() => {
     let cancelado = false
 
     async function cargarFrecuencia() {
       if (!token) {
-        if (!cancelado) setHistorialFrecuencia([])
+        if (!cancelado) {
+          setHistorialFrecuencia([])
+          setFrecuenciaCargada(true)
+        }
         return
       }
 
       try {
         const datos = await api.paciente.historialFrecuencia(token)
-        if (!cancelado) setHistorialFrecuencia(datos)
+        if (!cancelado) {
+          setHistorialFrecuencia(datos)
+          setErrorFrecuencia(false)
+        }
       } catch {
-        // Si no se puede consultar, mantenemos los últimos días recomendados.
+        if (!cancelado) setErrorFrecuencia(true)
+      } finally {
+        if (!cancelado) setFrecuenciaCargada(true)
       }
     }
 
@@ -89,6 +104,18 @@ export function PatientDashboard() {
   // hecho hoy aparezca inmediatamente en el calendario del paciente.
   const hoy = new Date()
   const hoyIso = isoArgentina(hoy)
+  const hayEntrenamientoHoy = diasVigentesEn(historialParaCalendario, hoyIso).includes(diaDeSemana(hoy))
+  const proximoEntrenamiento = useMemo(() => {
+    for (let diasDesdeHoy = 1; diasDesdeHoy <= 7; diasDesdeHoy++) {
+      const fecha = new Date(hoy)
+      fecha.setDate(hoy.getDate() + diasDesdeHoy)
+      if (diasVigentesEn(historialParaCalendario, isoArgentina(fecha)).includes(diaDeSemana(fecha))) {
+        return DIAS_SEMANA[diaDeSemana(fecha)]
+      }
+    }
+    return null
+  }, [historialParaCalendario, hoyIso])
+
   const semana = useMemo(() => {
     const lunes = new Date(hoy)
     lunes.setHours(12, 0, 0, 0)
@@ -114,16 +141,42 @@ export function PatientDashboard() {
         <>
           <div className="card hero">
             <div>
-              <h2>Hola {primerNombre}, ¿lista para hoy? 🐣</h2>
-              <p>
-                Tu ejercicio de hoy es una sesión de entrenamiento inspiratorio de 8 minutos con
-                resistencia nivel {paciente.resistenciaActual}. Llevás {resumen.rachaActualDias} día
-                {resumen.rachaActualDias === 1 ? '' : 's'} seguidos, ¡no cortes la racha!
-              </p>
+              {!frecuenciaCargada ? (
+                <>
+                  <h2>Hola {primerNombre} 🐣</h2>
+                  <p>Estamos revisando tu plan de entrenamiento de hoy.</p>
+                </>
+              ) : errorFrecuencia ? (
+                <>
+                  <h2>Hola {primerNombre} 🐣</h2>
+                  <p>No pudimos verificar si tenés un entrenamiento programado para hoy.</p>
+                </>
+              ) : hayEntrenamientoHoy ? (
+                <>
+                  <h2>Hola {primerNombre}, ¿lista para hoy? 🐣</h2>
+                  <p>
+                    Tu ejercicio de hoy es una sesión de entrenamiento inspiratorio de 8 minutos con
+                    resistencia nivel {paciente.resistenciaActual}. Llevás {resumen.rachaActualDias} día
+                    {resumen.rachaActualDias === 1 ? '' : 's'} seguidos, ¡no cortes la racha!
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2>¡Día de descanso! 🐣</h2>
+                  <p>
+                    Hoy no está programado ningún entrenamiento.
+                    {proximoEntrenamiento
+                      ? ` Volvé el próximo ${proximoEntrenamiento} para continuar con el entrenamiento.`
+                      : ' Tu médico todavía no programó el próximo entrenamiento.'}
+                  </p>
+                </>
+              )}
             </div>
-            <button className="btn btn-light" onClick={() => setSesionAbierta('entrenamiento')}>
-              Iniciar sesión de hoy
-            </button>
+            {frecuenciaCargada && !errorFrecuencia && hayEntrenamientoHoy && (
+              <button className="btn btn-light" onClick={() => setSesionAbierta('entrenamiento')}>
+                Iniciar sesión de hoy
+              </button>
+            )}
           </div>
 
           <div className="grid cols-3">
