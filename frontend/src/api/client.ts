@@ -147,5 +147,7 @@ export const api = {
     me: (token: string) => apiFetch<PacientePerfil>('/pacientes/me', { token }),
     actualizarPerfil: (token: string, body: PacientePerfilUpdateBody) =>
       apiFetch<PacientePerfil>('/pacientes/me', { method: 'PATCH', body, token }),
+    historialFrecuencia: (token: string) =>
+      apiFetch<Frecuencia[]>('/pacientes/me/frecuencia', { token }),
   },
 }

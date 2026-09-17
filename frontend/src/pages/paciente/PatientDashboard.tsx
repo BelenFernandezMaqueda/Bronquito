@@ -1,31 +1,34 @@
-import { useMemo, useState } from 'react'
+
+import { useEffect, useMemo, useState } from 'react'
 import { StatCard } from '../../components/ui/StatCard'
 import { EstadoSesionBadge } from '../../components/ui/Badge'
-import { MonthCalendar } from '../../components/ui/MonthCalendar'
+import { diasVigentesEn, MonthCalendar } from '../../components/ui/MonthCalendar'
 import { DeviceSessionModal } from '../../components/ui/DeviceSessionModal'
 import {
   entrenamientosDe,
   evaluacionesDe,
-  rachaSemanalDe,
   resumenProgresoDe,
   formatearFecha,
   formatearDuracion,
   pacientes,
   pacienteActualId,
-  HOY,
   isoArgentina,
 } from '../../data/mockData'
 import { useSession } from '../../auth/session'
+import { api } from '../../api/client'
+import type { Frecuencia } from '../../api/types'
 
 type SubVista = 'resumen' | 'calendario' | 'historial'
+
+const DIAS_SEMANA_CORTOS = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']
+const INTERVALO_ACTUALIZACION_FRECUENCIA_MS = 30_000
 
 export function PatientDashboard() {
   const [subVista, setSubVista] = useState<SubVista>('resumen')
   const [sesionAbierta, setSesionAbierta] = useState<'entrenamiento' | 'evaluacion' | null>(null)
 
-  const { perfil } = useSession()
+  const { perfil, token } = useSession()
   const paciente = pacientes.find((p) => p.id === pacienteActualId)!
-  const racha = rachaSemanalDe(pacienteActualId)
   const resumen = resumenProgresoDe(pacienteActualId)
   const sesiones = entrenamientosDe(pacienteActualId)
   const evaluaciones = evaluacionesDe(pacienteActualId)
@@ -36,6 +39,74 @@ export function PatientDashboard() {
   // El nombre sale de la sesión real; el resto del dashboard todavía es mock.
   const primerNombre =
     (perfil?.rol === 'paciente' && perfil.datos.nombre) || paciente.nombre.split(' ')[0]
+
+  const [historialFrecuencia, setHistorialFrecuencia] = useState<Frecuencia[]>([])
+
+  useEffect(() => {
+    let cancelado = false
+
+    async function cargarFrecuencia() {
+      if (!token) {
+        if (!cancelado) setHistorialFrecuencia([])
+        return
+      }
+
+      try {
+        const datos = await api.paciente.historialFrecuencia(token)
+        if (!cancelado) setHistorialFrecuencia(datos)
+      } catch {
+        // Si no se puede consultar, mantenemos los últimos días recomendados.
+      }
+    }
+
+    void cargarFrecuencia()
+
+    // Si el médico hizo el cambio en otra pestaña, se vuelve a consultar al
+    // regresar al dashboard. El intervalo también mantiene el dato actualizado
+    // mientras la pantalla del paciente queda abierta.
+    const alVolverALaApp = () => {
+      if (document.visibilityState === 'visible') void cargarFrecuencia()
+    }
+    window.addEventListener('focus', alVolverALaApp)
+    document.addEventListener('visibilitychange', alVolverALaApp)
+    const intervalo = window.setInterval(() => void cargarFrecuencia(), INTERVALO_ACTUALIZACION_FRECUENCIA_MS)
+
+    return () => {
+      cancelado = true
+      window.removeEventListener('focus', alVolverALaApp)
+      document.removeEventListener('visibilitychange', alVolverALaApp)
+      window.clearInterval(intervalo)
+    }
+  }, [token])
+
+  const historialParaCalendario = useMemo(
+    () => [...historialFrecuencia].reverse().map((f) => ({ vigenteDesde: f.vigente_desde, dias: f.dias_semana })),
+    [historialFrecuencia],
+  )
+
+  // La recomendación se guarda con la fecha real del servidor. Usamos la fecha
+  // actual acá (y no HOY, que sólo sostiene los datos mock) para que un cambio
+  // hecho hoy aparezca inmediatamente en el calendario del paciente.
+  const hoy = new Date()
+  const hoyIso = isoArgentina(hoy)
+  const semana = useMemo(() => {
+    const lunes = new Date(hoy)
+    lunes.setHours(12, 0, 0, 0)
+    lunes.setDate(lunes.getDate() - ((lunes.getDay() + 6) % 7))
+
+    return Array.from({ length: 7 }, (_, indice) => {
+      const fecha = new Date(lunes)
+      fecha.setDate(lunes.getDate() + indice)
+      const fechaIso = isoArgentina(fecha)
+      const recomendado = diasVigentesEn(historialParaCalendario, fechaIso).includes(indice)
+      return {
+        etiqueta: DIAS_SEMANA_CORTOS[indice],
+        fechaIso,
+        recomendado,
+        esHoy: fechaIso === hoyIso,
+      }
+    })
+  }, [historialParaCalendario, hoyIso])
 
   return (
     <div id="contenido-principal">
@@ -99,13 +170,18 @@ export function PatientDashboard() {
             </div>
             <div className="card">
               <div className="streak">
-                {racha.map((d) => (
-                  <div key={d.fecha} className={['day', d.completado ? 'done' : '', d.esHoy ? 'today' : ''].filter(Boolean).join(' ')}>
-                    <div className="day-name">{d.etiqueta}</div>
-                    <div className="day-mark">{d.completado ? '✓' : d.esHoy ? '🐥' : '—'}</div>
+                {semana.map((dia) => (
+                  <div
+                    key={dia.fechaIso}
+                    className={['day', dia.recomendado ? 'done' : '', dia.esHoy ? 'today' : ''].filter(Boolean).join(' ')}
+                    title={dia.recomendado ? 'Día recomendado para entrenar' : 'Sin entrenamiento recomendado'}
+                  >
+                    <div className="day-name">{dia.etiqueta}</div>
+                    <div className="day-mark">{dia.recomendado ? '✓' : '—'}</div>
                   </div>
                 ))}
               </div>
+              <p className="field-hint">Los checks indican los días que recomendó tu médico para entrenar.</p>
             </div>
           </section>
 
@@ -162,12 +238,16 @@ export function PatientDashboard() {
             </button>
           </div>
           <MonthCalendar
-            anio={HOY.getFullYear()}
-            mes={HOY.getMonth()}
+            anio={hoy.getFullYear()}
+            mes={hoy.getMonth()}
             diasConEntrenamiento={diasConEntrenamiento}
             diasConEvaluacion={diasConEvaluacion}
-            hoyIso={isoArgentina(HOY)}
+            historialRecomendaciones={historialParaCalendario}
+            hoyIso={hoyIso}
           />
+          <p className="invite-note">
+            Los días con ✓ son los recomendados por tu médico. Usá las flechas para consultar cualquier mes.
+          </p>
         </div>
       )}
 

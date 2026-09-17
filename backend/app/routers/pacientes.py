@@ -9,6 +9,9 @@ from app.core.security import hashear_secreto
 from app.models.paciente import Paciente
 from app.schemas.paciente import PacientePerfilOut, PacientePerfilUpdate
 
+from app.models.frecuencia_recomendada import FrecuenciaRecomendada
+from app.schemas.frecuencia import FrecuenciaOut
+
 router = APIRouter(prefix="/pacientes", tags=["pacientes"])
 
 
@@ -66,3 +69,17 @@ def actualizar_mi_perfil(
     db.commit()
     db.refresh(paciente)
     return paciente
+
+
+@router.get("/me/frecuencia", response_model=list[FrecuenciaOut])
+def mi_historial_frecuencia(
+    paciente: Paciente = Depends(get_current_paciente),
+    db: Session = Depends(get_db),
+):
+    """Historial de frecuencia/días recomendados del propio paciente logueado."""
+    return (
+        db.query(FrecuenciaRecomendada)
+        .filter(FrecuenciaRecomendada.id_paciente == paciente.id_paciente)
+        .order_by(FrecuenciaRecomendada.vigente_desde.desc(), FrecuenciaRecomendada.creado_en.desc())
+        .all()
+    )

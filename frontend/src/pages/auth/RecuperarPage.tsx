@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { ApiError, api } from '../../api/client'
 import { AuthShell } from './AuthShell'
@@ -8,14 +8,15 @@ import { AuthShell } from './AuthShell'
 type Tab = 'paciente' | 'medico'
 
 export function RecuperarPage() {
-  const [tab, setTab] = useState<Tab>('paciente')
+  const [params, setParams] = useSearchParams()
+  const tab: Tab = params.get('rol') === 'medico' ? 'medico' : 'paciente'
   const [valor, setValor] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
   const [mensaje, setMensaje] = useState<string | null>(null)
 
   function cambiarTab(nuevo: Tab) {
-    setTab(nuevo)
+    setParams({ rol: nuevo }, { replace: true })
     setError(null)
     setMensaje(null)
   }
@@ -92,7 +93,7 @@ export function RecuperarPage() {
       )}
 
       <div className="auth-links">
-        <Link to="/login">← Volver al login</Link>
+        <Link to={`/login?rol=${tab}`}>← Volver al login</Link>
       </div>
     </AuthShell>
   )

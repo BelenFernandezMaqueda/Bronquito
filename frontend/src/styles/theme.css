@@ -1022,6 +1022,19 @@ tr:last-child td {
   flex: none;
 }
 
+.cal-day-heading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.cal-recommendation-check {
+  line-height: 1;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .cal-cell.is-recomendado {
   background: var(--pink-soft);
   color: var(--pink-deep);

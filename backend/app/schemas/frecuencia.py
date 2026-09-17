@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class FrecuenciaOut(BaseModel):
@@ -28,3 +28,12 @@ class FrecuenciaCrearRequest(BaseModel):
         if len(set(valor)) != len(valor):
             raise ValueError("No puede haber días repetidos.")
         return sorted(valor)
+
+    @model_validator(mode="after")
+    def _cantidad_de_dias_coincide_con_la_frecuencia(self):
+        """Evita guardar una frecuencia que el calendario no pueda representar."""
+        if len(self.dias_semana) != self.sesiones_por_semana:
+            raise ValueError(
+                "La cantidad de días recomendados tiene que coincidir con las sesiones por semana."
+            )
+        return self
