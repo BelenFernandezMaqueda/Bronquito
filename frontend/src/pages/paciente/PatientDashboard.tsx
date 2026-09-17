@@ -4,6 +4,7 @@ import { StatCard } from '../../components/ui/StatCard'
 import { EstadoSesionBadge } from '../../components/ui/Badge'
 import { diasVigentesEn, MonthCalendar } from '../../components/ui/MonthCalendar'
 import { DeviceSessionModal } from '../../components/ui/DeviceSessionModal'
+import { MedicalTeamPanel } from './MedicalTeamPanel'
 import {
   entrenamientosDe,
   evaluacionesDe,
@@ -105,6 +106,7 @@ export function PatientDashboard() {
   const hoy = new Date()
   const hoyIso = isoArgentina(hoy)
   const hayEntrenamientoHoy = diasVigentesEn(historialParaCalendario, hoyIso).includes(diaDeSemana(hoy))
+  const esDiaDescanso = frecuenciaCargada && !errorFrecuencia && !hayEntrenamientoHoy
   const proximoEntrenamiento = useMemo(() => {
     for (let diasDesdeHoy = 1; diasDesdeHoy <= 7; diasDesdeHoy++) {
       const fecha = new Date(hoy)
@@ -136,10 +138,12 @@ export function PatientDashboard() {
   }, [historialParaCalendario, hoyIso])
 
   return (
-    <div id="contenido-principal">
+    <div className="patient-layout">
+      <MedicalTeamPanel />
+      <div id="contenido-principal">
       {subVista === 'resumen' && (
         <>
-          <div className="card hero">
+          <div className={['card', 'hero', esDiaDescanso ? 'hero-rest' : ''].filter(Boolean).join(' ')}>
             <div>
               {!frecuenciaCargada ? (
                 <>
@@ -176,6 +180,13 @@ export function PatientDashboard() {
               <button className="btn btn-light" onClick={() => setSesionAbierta('entrenamiento')}>
                 Iniciar sesión de hoy
               </button>
+            )}
+            {esDiaDescanso && (
+              <img
+                className="hero-chill"
+                src="/bronquito-chill.png"
+                alt="Bronquito descansando"
+              />
             )}
           </div>
 
@@ -334,6 +345,7 @@ export function PatientDashboard() {
       {sesionAbierta && (
         <DeviceSessionModal tipo={sesionAbierta} onClose={() => setSesionAbierta(null)} />
       )}
+      </div>
     </div>
   )
 }

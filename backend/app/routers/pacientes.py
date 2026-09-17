@@ -6,7 +6,10 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import get_current_paciente
 from app.core.security import hashear_secreto
+from app.models.medico import Medico
+from app.models.medico_paciente import MedicoPaciente
 from app.models.paciente import Paciente
+from app.schemas.medico import MedicoACargoOut
 from app.schemas.paciente import PacientePerfilOut, PacientePerfilUpdate
 
 from app.models.frecuencia_recomendada import FrecuenciaRecomendada
@@ -81,5 +84,20 @@ def mi_historial_frecuencia(
         db.query(FrecuenciaRecomendada)
         .filter(FrecuenciaRecomendada.id_paciente == paciente.id_paciente)
         .order_by(FrecuenciaRecomendada.vigente_desde.desc(), FrecuenciaRecomendada.creado_en.desc())
+        .all()
+    )
+
+
+@router.get("/me/medicos", response_model=list[MedicoACargoOut])
+def mis_medicos_a_cargo(
+    paciente: Paciente = Depends(get_current_paciente),
+    db: Session = Depends(get_db),
+):
+    """Médicos que actualmente tienen un vínculo y pueden ver la ficha del paciente."""
+    return (
+        db.query(Medico)
+        .join(MedicoPaciente, MedicoPaciente.id_medico == Medico.id_medico)
+        .filter(MedicoPaciente.id_paciente == paciente.id_paciente)
+        .order_by(Medico.apellido, Medico.nombre)
         .all()
     )

@@ -35,7 +35,6 @@ export function Header() {
       <a href="#contenido-principal" className="skip-link">
         Saltar al contenido principal
       </a>
-      <DuckLogo className="deco" />
       <div className="topbar">
         <div className="brand">
           <DuckLogo className="brand-duck" />
