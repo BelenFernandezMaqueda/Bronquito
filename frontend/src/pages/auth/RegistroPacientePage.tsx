@@ -3,10 +3,19 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { ApiError, api } from '../../api/client'
-import type { Sexo } from '../../api/types'
+import type { EnfermedadPreexistente, Sexo } from '../../api/types'
 import { useSession } from '../../auth/session'
 import { PasswordField } from '../../components/ui/PasswordField'
 import { AuthShell } from './AuthShell'
+
+const OPCIONES_ENFERMEDADES: Array<{ valor: EnfermedadPreexistente; etiqueta: string }> = [
+  { valor: 'EPOC', etiqueta: 'EPOC' },
+  { valor: 'Asma', etiqueta: 'Asma' },
+  { valor: 'Lesión Medular', etiqueta: 'Lesión Medular' },
+  { valor: 'Fibrosis quística', etiqueta: 'Fibrosis quística' },
+  { valor: 'Otra', etiqueta: 'Otra' },
+  { valor: 'NS/NC', etiqueta: 'No sabe / no contesta (NS/NC)' },
+]
 
 export function RegistroPacientePage() {
   const { iniciarSesion } = useSession()
@@ -23,6 +32,7 @@ export function RegistroPacientePage() {
   const [nacimiento, setNacimiento] = useState('')
   const [sexo, setSexo] = useState<Sexo | ''>('')
   const [fumador, setFumador] = useState(false)
+  const [enfermedades, setEnfermedades] = useState<EnfermedadPreexistente[]>([])
   const [acepto, setAcepto] = useState(false)
 
   const [error, setError] = useState<string | null>(null)
@@ -31,6 +41,10 @@ export function RegistroPacientePage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
+    if (/\d/.test(nombre) || /\d/.test(apellido)) {
+      setError('El nombre y el apellido no pueden contener números.')
+      return
+    }
     if (!/^\d+$/.test(dni)) {
       setError('El DNI solo puede contener números.')
       return
@@ -51,6 +65,10 @@ export function RegistroPacientePage() {
       setError('Elegí una opción en "Sexo".')
       return
     }
+    if (enfermedades.length === 0) {
+      setError('Elegí al menos una opción en "Enfermedades preexistentes".')
+      return
+    }
     setEnviando(true)
     try {
       const res = await api.paciente.registro({
@@ -64,6 +82,7 @@ export function RegistroPacientePage() {
         fecha_nacimiento: nacimiento,
         sexo,
         fumador,
+        enfermedades,
         acepto_terminos: acepto,
       })
       await iniciarSesion(res.access_token, res.rol)
@@ -72,6 +91,12 @@ export function RegistroPacientePage() {
       setError(err instanceof ApiError ? err.message : 'No se pudo crear la cuenta.')
       setEnviando(false)
     }
+  }
+
+  function cambiarEnfermedades(enfermedad: EnfermedadPreexistente, seleccionada: boolean) {
+    setEnfermedades((actuales) =>
+      seleccionada ? [...actuales, enfermedad] : actuales.filter((actual) => actual !== enfermedad),
+    )
   }
 
   return (
@@ -206,6 +231,22 @@ export function RegistroPacientePage() {
           </div>
         </div>
 
+        <div className="field enfermedades-field">
+          <span>Enfermedades preexistentes</span>
+          <div className="enfermedades-options">
+            {OPCIONES_ENFERMEDADES.map(({ valor, etiqueta }) => (
+              <label className="field-check" key={valor}>
+                <input
+                  type="checkbox"
+                  checked={enfermedades.includes(valor)}
+                  onChange={(e) => cambiarEnfermedades(valor, e.target.checked)}
+                />
+                <span>{etiqueta}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
         <label className="field-check">
           <input type="checkbox" checked={fumador} onChange={(e) => setFumador(e.target.checked)} />
           <span>Soy fumador/a.</span>
@@ -216,7 +257,7 @@ export function RegistroPacientePage() {
           <span>Acepto los términos y la política de privacidad de Bronquito.</span>
         </label>
 
-        <button type="submit" className="btn btn-teal btn-block" disabled={enviando || !acepto}>
+        <button type="submit" className="btn btn-teal btn-block" disabled={enviando || !acepto || enfermedades.length === 0}>
           {enviando ? 'Creando…' : 'Crear cuenta'}
         </button>
       </form>

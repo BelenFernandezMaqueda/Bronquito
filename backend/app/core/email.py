@@ -84,6 +84,13 @@ def enviar_email(
         logger.info("EMAIL_ENABLED=false — no se envía a %s (asunto: %r)", destinatario, asunto)
         return
 
+    # Evitamos intentar un relay anónimo (que Gmail siempre rechaza) y dejamos
+    # una causa accionable en el log en vez de un error SMTP poco claro.
+    if not settings.smtp_user or not settings.smtp_password:
+        detalle = "Falta SMTP_USER o SMTP_PASSWORD; el mail no puede autenticarse."
+        logger.error("no se pudo enviar el mail a %s: %s", destinatario, detalle)
+        raise EmailNoEnviado(detalle)
+
     try:
         if settings.smtp_ssl:
             contexto = ssl.create_default_context()
@@ -96,6 +103,13 @@ def enviar_email(
                 if settings.smtp_starttls:
                     servidor.starttls(context=ssl.create_default_context())
                 _autenticar_y_mandar(servidor, mensaje)
+    except smtplib.SMTPAuthenticationError as exc:
+        detalle = (
+            "Gmail rechazó las credenciales SMTP. Usá una Contraseña de aplicación "
+            "vigente (no la contraseña normal de Google) en SMTP_PASSWORD."
+        )
+        logger.error("no se pudo enviar el mail a %s: %s", destinatario, detalle)
+        raise EmailNoEnviado(detalle) from exc
     except (smtplib.SMTPException, OSError) as exc:
         logger.error("no se pudo enviar el mail a %s: %s", destinatario, exc)
         raise EmailNoEnviado(str(exc)) from exc

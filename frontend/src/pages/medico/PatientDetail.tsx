@@ -248,9 +248,10 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
       <div className="detail-header">
         <div className="detail-id">
           <div className="p-sub">
-            {paciente.diagnostico} · {paciente.edad} años
+            {paciente.edad} años
           </div>
           <div className="tags">
+            <span className="tag">Enfermedades: {paciente.enfermedades ?? 'sin informar'}</span>
             <span className="tag">PIM inicial: {pimInicial != null ? `${pimInicial} cmH₂O` : 'sin definir'}</span>
             <span className="tag">PIM actual: {pimActual != null ? `${pimActual} cmH₂O` : 'sin definir'}</span>
             <span className="tag">
@@ -479,8 +480,8 @@ export function PatientDetail({ paciente, onDesvincular }: PatientDetailProps) {
           }
         >
           <p>
-            ¿Seguro que querés desvincular a <strong>{paciente.nombre}</strong>? Vas a dejar de ver su
-            información clínica hasta que lo vuelvas a conectar con su DNI y PIN.
+            ¿Desea desvincular a <strong>{paciente.nombre}</strong>? Perderá el acceso a su información clínica.
+            Podrá volver a vincularla en cualquier momento utilizando su DNI y PIN.
           </p>
           {errorDesvinculo && <div className="auth-alert error">{errorDesvinculo}</div>}
         </Modal>

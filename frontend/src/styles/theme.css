@@ -122,15 +122,6 @@ textarea:focus-visible,
   overflow: hidden;
 }
 
-.topwave svg.deco {
-  position: absolute;
-  top: 8px;
-  right: 26px;
-  height: 52px;
-  width: auto;
-  opacity: 0.95;
-}
-
 .topbar {
   display: flex;
   align-items: center;
@@ -157,6 +148,7 @@ textarea:focus-visible,
   width: 40px;
   height: 40px;
   flex: none;
+  object-fit: contain;
 }
 
 .brand-name {
@@ -204,6 +196,23 @@ textarea:focus-visible,
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.who-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.who-profile:hover .who-name {
+  text-decoration: underline;
 }
 
 .avatar {
@@ -335,6 +344,19 @@ main {
   opacity: 0.95;
   font-size: 14.5px;
   max-width: 440px;
+}
+
+.hero-chill {
+  width: 118px;
+  height: 118px;
+  flex: none;
+  object-fit: contain;
+}
+
+/* En descanso, el rosa queda detrás del mensaje y se desvanece antes para
+   darle un fondo claro al logo. */
+.hero.hero-rest {
+  background: linear-gradient(105deg, var(--pink) 0%, #f773b3 32%, #fbe7f2 67%, #fff 84%);
 }
 
 /* ---------- Botones ---------- */
@@ -608,8 +630,43 @@ section.block {
   align-items: start;
 }
 
+.patient-layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.patient-layout > #contenido-principal {
+  min-width: 0;
+}
+
 .patient-list {
   padding: 14px;
+}
+
+.medical-team-heading {
+  padding: 6px 8px 12px;
+}
+
+.medical-team-heading h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.medical-team-heading p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  line-height: 1.35;
+}
+
+.medical-team-item {
+  cursor: default;
+}
+
+.medical-team-item:hover {
+  background: none;
 }
 
 .search {
@@ -1005,6 +1062,19 @@ tr:last-child td {
   flex: none;
 }
 
+.cal-day-heading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.cal-recommendation-check {
+  line-height: 1;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .cal-cell.is-recomendado {
   background: var(--pink-soft);
   color: var(--pink-deep);
@@ -1130,6 +1200,7 @@ button.cal-ribbon {
   width: 56px;
   height: 56px;
   margin: 0 auto 14px;
+  object-fit: contain;
 }
 
 .modal h3 {
@@ -1360,6 +1431,9 @@ button.cal-ribbon {
   .doctor-layout {
     grid-template-columns: 1fr;
   }
+  .patient-layout {
+    grid-template-columns: 1fr;
+  }
   .hero {
     flex-direction: column;
     align-items: flex-start;
@@ -1408,9 +1482,10 @@ button.cal-ribbon {
   margin-bottom: 22px;
 }
 
-.auth-brand svg {
+.auth-brand img {
   width: 52px;
   height: 40px;
+  object-fit: contain;
 }
 
 .auth-brand .brand-name {
@@ -1511,6 +1586,42 @@ button.cal-ribbon {
   flex-shrink: 0;
 }
 
+.enfermedades-field > span {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+
+.enfermedades-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 14px;
+}
+
+.enfermedades-options .field-check {
+  margin: 0 0 10px;
+}
+
+.settings-card {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.settings-card h2 {
+  margin: 16px 0 4px;
+}
+
+.settings-intro {
+  color: var(--ink-soft);
+  margin: 0 0 22px;
+}
+
+.settings-card .btn-outline {
+  margin-bottom: 18px;
+}
+
 .btn-block {
   width: 100%;
   justify-content: center;
@@ -1570,13 +1681,18 @@ button.cal-ribbon {
   font-weight: 700;
 }
 
-.auth-loading svg {
+.auth-loading img {
   width: 48px;
   height: 38px;
+  object-fit: contain;
 }
 
 @media (max-width: 480px) {
   .auth-row {
+    grid-template-columns: 1fr;
+  }
+
+  .enfermedades-options {
     grid-template-columns: 1fr;
   }
 }

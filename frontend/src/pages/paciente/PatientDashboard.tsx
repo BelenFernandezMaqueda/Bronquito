@@ -1,58 +1,193 @@
-import { useMemo, useState } from 'react'
+
+import { useEffect, useMemo, useState } from 'react'
 import { StatCard } from '../../components/ui/StatCard'
 import { EstadoSesionBadge } from '../../components/ui/Badge'
-import { MonthCalendar } from '../../components/ui/MonthCalendar'
+import { diasVigentesEn, MonthCalendar } from '../../components/ui/MonthCalendar'
 import { DeviceSessionModal } from '../../components/ui/DeviceSessionModal'
+import { MedicalTeamPanel } from './MedicalTeamPanel'
 import {
   entrenamientosDe,
-  calibracionesDe,
-  rachaSemanalDe,
+  evaluacionesDe,
   resumenProgresoDe,
   formatearFecha,
   formatearDuracion,
   pacientes,
   pacienteActualId,
-  HOY,
   isoArgentina,
 } from '../../data/mockData'
 import { useSession } from '../../auth/session'
+import { api } from '../../api/client'
+import type { Frecuencia } from '../../api/types'
 
 type SubVista = 'resumen' | 'calendario' | 'historial'
 
+const DIAS_SEMANA_CORTOS = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']
+const DIAS_SEMANA = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
+const INTERVALO_ACTUALIZACION_FRECUENCIA_MS = 30_000
+
+function diaDeSemana(fecha: Date): number {
+  return (fecha.getDay() + 6) % 7 // 0 = lunes
+}
+
 export function PatientDashboard() {
   const [subVista, setSubVista] = useState<SubVista>('resumen')
-  const [sesionAbierta, setSesionAbierta] = useState<'entrenamiento' | 'calibracion' | null>(null)
+  const [sesionAbierta, setSesionAbierta] = useState<'entrenamiento' | 'evaluacion' | null>(null)
 
-  const { perfil } = useSession()
+  const { perfil, token } = useSession()
   const paciente = pacientes.find((p) => p.id === pacienteActualId)!
-  const racha = rachaSemanalDe(pacienteActualId)
   const resumen = resumenProgresoDe(pacienteActualId)
   const sesiones = entrenamientosDe(pacienteActualId)
-  const calibraciones = calibracionesDe(pacienteActualId)
+  const evaluaciones = evaluacionesDe(pacienteActualId)
 
   const diasConEntrenamiento = useMemo(() => new Set(sesiones.map((s) => s.fecha)), [sesiones])
-  const diasConEvaluacion = useMemo(() => new Set(calibraciones.map((s) => s.fecha)), [calibraciones])
+  const diasConEvaluacion = useMemo(() => new Set(evaluaciones.map((s) => s.fecha)), [evaluaciones])
 
   // El nombre sale de la sesión real; el resto del dashboard todavía es mock.
   const primerNombre =
     (perfil?.rol === 'paciente' && perfil.datos.nombre) || paciente.nombre.split(' ')[0]
 
+  const [historialFrecuencia, setHistorialFrecuencia] = useState<Frecuencia[]>([])
+  const [frecuenciaCargada, setFrecuenciaCargada] = useState(false)
+  const [errorFrecuencia, setErrorFrecuencia] = useState(false)
+
+  useEffect(() => {
+    let cancelado = false
+
+    async function cargarFrecuencia() {
+      if (!token) {
+        if (!cancelado) {
+          setHistorialFrecuencia([])
+          setFrecuenciaCargada(true)
+        }
+        return
+      }
+
+      try {
+        const datos = await api.paciente.historialFrecuencia(token)
+        if (!cancelado) {
+          setHistorialFrecuencia(datos)
+          setErrorFrecuencia(false)
+        }
+      } catch {
+        if (!cancelado) setErrorFrecuencia(true)
+      } finally {
+        if (!cancelado) setFrecuenciaCargada(true)
+      }
+    }
+
+    void cargarFrecuencia()
+
+    // Si el médico hizo el cambio en otra pestaña, se vuelve a consultar al
+    // regresar al dashboard. El intervalo también mantiene el dato actualizado
+    // mientras la pantalla del paciente queda abierta.
+    const alVolverALaApp = () => {
+      if (document.visibilityState === 'visible') void cargarFrecuencia()
+    }
+    window.addEventListener('focus', alVolverALaApp)
+    document.addEventListener('visibilitychange', alVolverALaApp)
+    const intervalo = window.setInterval(() => void cargarFrecuencia(), INTERVALO_ACTUALIZACION_FRECUENCIA_MS)
+
+    return () => {
+      cancelado = true
+      window.removeEventListener('focus', alVolverALaApp)
+      document.removeEventListener('visibilitychange', alVolverALaApp)
+      window.clearInterval(intervalo)
+    }
+  }, [token])
+
+  const historialParaCalendario = useMemo(
+    () => [...historialFrecuencia].reverse().map((f) => ({ vigenteDesde: f.vigente_desde, dias: f.dias_semana })),
+    [historialFrecuencia],
+  )
+
+  // La recomendación se guarda con la fecha real del servidor. Usamos la fecha
+  // actual acá (y no HOY, que sólo sostiene los datos mock) para que un cambio
+  // hecho hoy aparezca inmediatamente en el calendario del paciente.
+  const hoy = new Date()
+  const hoyIso = isoArgentina(hoy)
+  const hayEntrenamientoHoy = diasVigentesEn(historialParaCalendario, hoyIso).includes(diaDeSemana(hoy))
+  const esDiaDescanso = frecuenciaCargada && !errorFrecuencia && !hayEntrenamientoHoy
+  const proximoEntrenamiento = useMemo(() => {
+    for (let diasDesdeHoy = 1; diasDesdeHoy <= 7; diasDesdeHoy++) {
+      const fecha = new Date(hoy)
+      fecha.setDate(hoy.getDate() + diasDesdeHoy)
+      if (diasVigentesEn(historialParaCalendario, isoArgentina(fecha)).includes(diaDeSemana(fecha))) {
+        return DIAS_SEMANA[diaDeSemana(fecha)]
+      }
+    }
+    return null
+  }, [historialParaCalendario, hoyIso])
+
+  const semana = useMemo(() => {
+    const lunes = new Date(hoy)
+    lunes.setHours(12, 0, 0, 0)
+    lunes.setDate(lunes.getDate() - ((lunes.getDay() + 6) % 7))
+
+    return Array.from({ length: 7 }, (_, indice) => {
+      const fecha = new Date(lunes)
+      fecha.setDate(lunes.getDate() + indice)
+      const fechaIso = isoArgentina(fecha)
+      const recomendado = diasVigentesEn(historialParaCalendario, fechaIso).includes(indice)
+      return {
+        etiqueta: DIAS_SEMANA_CORTOS[indice],
+        fechaIso,
+        recomendado,
+        esHoy: fechaIso === hoyIso,
+      }
+    })
+  }, [historialParaCalendario, hoyIso])
+
   return (
-    <div id="contenido-principal">
+    <div className="patient-layout">
+      <MedicalTeamPanel />
+      <div id="contenido-principal">
       {subVista === 'resumen' && (
         <>
-          <div className="card hero">
+          <div className={['card', 'hero', esDiaDescanso ? 'hero-rest' : ''].filter(Boolean).join(' ')}>
             <div>
-              <h2>Hola {primerNombre}, ¿lista para hoy? 🐣</h2>
-              <p>
-                Tu ejercicio de hoy es una sesión de entrenamiento inspiratorio de 8 minutos con
-                resistencia nivel {paciente.resistenciaActual}. Llevás {resumen.rachaActualDias} día
-                {resumen.rachaActualDias === 1 ? '' : 's'} seguidos, ¡no cortes la racha!
-              </p>
+              {!frecuenciaCargada ? (
+                <>
+                  <h2>Hola {primerNombre} 🐣</h2>
+                  <p>Estamos revisando tu plan de entrenamiento de hoy.</p>
+                </>
+              ) : errorFrecuencia ? (
+                <>
+                  <h2>Hola {primerNombre} 🐣</h2>
+                  <p>No pudimos verificar si tenés un entrenamiento programado para hoy.</p>
+                </>
+              ) : hayEntrenamientoHoy ? (
+                <>
+                  <h2>Hola {primerNombre}, ¿lista para hoy? 🐣</h2>
+                  <p>
+                    Tu ejercicio de hoy es una sesión de entrenamiento inspiratorio de 8 minutos con
+                    resistencia nivel {paciente.resistenciaActual}. Llevás {resumen.rachaActualDias} día
+                    {resumen.rachaActualDias === 1 ? '' : 's'} seguidos, ¡no cortes la racha!
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h2>¡Día de descanso! 🐣</h2>
+                  <p>
+                    Hoy no está programado ningún entrenamiento.
+                    {proximoEntrenamiento
+                      ? ` Volvé el próximo ${proximoEntrenamiento} para continuar con el entrenamiento.`
+                      : ' Tu médico todavía no programó el próximo entrenamiento.'}
+                  </p>
+                </>
+              )}
             </div>
-            <button className="btn btn-light" onClick={() => setSesionAbierta('entrenamiento')}>
-              Iniciar sesión de hoy
-            </button>
+            {frecuenciaCargada && !errorFrecuencia && hayEntrenamientoHoy && (
+              <button className="btn btn-light" onClick={() => setSesionAbierta('entrenamiento')}>
+                Iniciar sesión de hoy
+              </button>
+            )}
+            {esDiaDescanso && (
+              <img
+                className="hero-chill"
+                src="/bronquito-chill.png"
+                alt="Bronquito descansando"
+              />
+            )}
           </div>
 
           <div className="grid cols-3">
@@ -99,13 +234,18 @@ export function PatientDashboard() {
             </div>
             <div className="card">
               <div className="streak">
-                {racha.map((d) => (
-                  <div key={d.fecha} className={['day', d.completado ? 'done' : '', d.esHoy ? 'today' : ''].filter(Boolean).join(' ')}>
-                    <div className="day-name">{d.etiqueta}</div>
-                    <div className="day-mark">{d.completado ? '✓' : d.esHoy ? '🐥' : '—'}</div>
+                {semana.map((dia) => (
+                  <div
+                    key={dia.fechaIso}
+                    className={['day', dia.recomendado ? 'done' : '', dia.esHoy ? 'today' : ''].filter(Boolean).join(' ')}
+                    title={dia.recomendado ? 'Día recomendado para entrenar' : 'Sin entrenamiento recomendado'}
+                  >
+                    <div className="day-name">{dia.etiqueta}</div>
+                    <div className="day-mark">{dia.recomendado ? '✓' : '—'}</div>
                   </div>
                 ))}
               </div>
+              <p className="field-hint">Los checks indican los días que recomendó tu médico para entrenar.</p>
             </div>
           </section>
 
@@ -137,16 +277,16 @@ export function PatientDashboard() {
 
           <section className="block">
             <div className="block-title">
-              <h3>Calibraciones</h3>
+              <h3>Evaluaciones</h3>
             </div>
             <div className="card">
               <p style={{ fontSize: 13.5, color: 'var(--ink-soft)', marginBottom: 14 }}>
-                Tu última calibración fue el {calibraciones[0] ? formatearFecha(calibraciones[0].fecha) : '—'}. La
-                calibración mide qué tan fuerte y eficiente es tu respiración para ajustar la
+                Tu última evaluación fue el {evaluaciones[0] ? formatearFecha(evaluaciones[0].fecha) : '—'}. La
+                evaluación mide qué tan fuerte y eficiente es tu respiración para ajustar la
                 resistencia del dispositivo.
               </p>
-              <button className="btn btn-outline btn-sm" onClick={() => setSesionAbierta('calibracion')}>
-                Iniciar calibración
+              <button className="btn btn-outline btn-sm" onClick={() => setSesionAbierta('evaluacion')}>
+                Iniciar evaluación
               </button>
             </div>
           </section>
@@ -162,12 +302,16 @@ export function PatientDashboard() {
             </button>
           </div>
           <MonthCalendar
-            anio={HOY.getFullYear()}
-            mes={HOY.getMonth()}
+            anio={hoy.getFullYear()}
+            mes={hoy.getMonth()}
             diasConEntrenamiento={diasConEntrenamiento}
             diasConEvaluacion={diasConEvaluacion}
-            hoyIso={isoArgentina(HOY)}
+            historialRecomendaciones={historialParaCalendario}
+            hoyIso={hoyIso}
           />
+          <p className="invite-note">
+            Los días con ✓ son los recomendados por tu médico. Usá las flechas para consultar cualquier mes.
+          </p>
         </div>
       )}
 
@@ -201,6 +345,7 @@ export function PatientDashboard() {
       {sesionAbierta && (
         <DeviceSessionModal tipo={sesionAbierta} onClose={() => setSesionAbierta(null)} />
       )}
+      </div>
     </div>
   )
 }

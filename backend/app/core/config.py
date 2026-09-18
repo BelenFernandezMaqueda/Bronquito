@@ -6,7 +6,17 @@ mismo código sirve para tu máquina, para el contenedor Docker, o para un
 servidor real, cambiando sólo el archivo `.env`.
 """
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+# El ``.env`` del proyecto vive en la raíz del repositorio, no dentro de
+# ``backend``. Usar una ruta absoluta evita que se pierda la configuración de
+# SMTP cuando la API se arranca con ``cd backend`` (por ejemplo, al ejecutar
+# uvicorn manualmente). Las variables de entorno del contenedor siguen
+# teniendo prioridad sobre este archivo.
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 class Settings(BaseSettings):
@@ -53,7 +63,7 @@ class Settings(BaseSettings):
     # dirección de mail, resetear contraseña/PIN).
     frontend_url: str = "http://localhost:5173"
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=PROJECT_ROOT / ".env", extra="ignore")
 
     @property
     def database_url(self) -> str:

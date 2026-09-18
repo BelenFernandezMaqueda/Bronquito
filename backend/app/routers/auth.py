@@ -196,6 +196,7 @@ def registrar_paciente(payload: PacienteRegistro, db: Session = Depends(get_db))
         fecha_nacimiento=payload.fecha_nacimiento,
         sexo=payload.sexo,
         fumador=payload.fumador,
+        enfermedades=", ".join(payload.enfermedades),
         fecha_registro=date.today(),
         origen=OrigenPaciente.web,
         acepto_terminos=True,

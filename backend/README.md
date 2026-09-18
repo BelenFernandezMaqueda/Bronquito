@@ -118,7 +118,7 @@ MySQL está expuesto en `localhost:3306` mientras Docker corre. Datos de conexi�
 ## ⚠️ Si ya habías levantado el proyecto antes de este cambio
 
 Las tablas `usuarios` y `medicos` sumaron columnas (`usuarios`: `nombre`, `apellido`,
-`email`, `origen`, `acepto_terminos`, `fecha_aceptacion_terminos`, `reset_token`,
+`email`, `enfermedades`, `origen`, `acepto_terminos`, `fecha_aceptacion_terminos`, `reset_token`,
 `reset_token_expira`; `medicos`: `nombre`, `apellido`, y los mismos de reset/términos).
 Como `create_all()` sólo crea tablas que no existen — no actualiza las que ya existen —
 necesitás borrar la base vieja una vez antes de levantar de nuevo:

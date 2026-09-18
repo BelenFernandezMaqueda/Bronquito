@@ -7,6 +7,8 @@ export type Rol = 'medico' | 'paciente'
 
 export type Sexo = 'F' | 'M' | 'X'
 
+export type EnfermedadPreexistente = 'EPOC' | 'Asma' | 'Lesión Medular' | 'Fibrosis quística' | 'Otra' | 'NS/NC'
+
 export interface TokenOut {
   access_token: string
   token_type: 'bearer'
@@ -25,6 +27,13 @@ export interface MedicoPerfil {
   fecha_registro: string
 }
 
+/** Médico que tiene acceso vigente a la información clínica del paciente. */
+export interface MedicoACargo {
+  id_medico: number
+  nombre: string
+  apellido: string
+}
+
 export interface PacientePerfil {
   id_paciente: number
   dni: string
@@ -36,6 +45,7 @@ export interface PacientePerfil {
   fecha_nacimiento: string
   sexo: string
   fumador: boolean
+  enfermedades: string | null
   fecha_registro: string
   origen: 'DISPOSITIVO' | 'WEB'
   acepto_terminos: boolean
@@ -133,10 +143,13 @@ export interface PacienteRegistroBody {
   fecha_nacimiento: string
   sexo: Sexo
   fumador: boolean
+  enfermedades: EnfermedadPreexistente[]
   acepto_terminos: boolean
 }
 
 export interface PacientePerfilUpdateBody {
+  dni?: string
+  pin?: string
   nombre?: string
   apellido?: string
   email?: string
@@ -145,7 +158,15 @@ export interface PacientePerfilUpdateBody {
   fecha_nacimiento?: string
   sexo?: Sexo
   fumador?: boolean
+  enfermedades?: EnfermedadPreexistente[]
   acepto_terminos?: boolean
+}
+
+export interface MedicoPerfilUpdateBody {
+  usuario?: string
+  nombre?: string
+  apellido?: string
+  nueva_contrasena?: string
 }
 
 export interface FrecuenciaCrearBody {

@@ -10,7 +10,9 @@ import type {
   Frecuencia,
   FrecuenciaCrearBody,
   MedicoLoginBody,
+  MedicoACargo,
   MedicoPerfil,
+  MedicoPerfilUpdateBody,
   MedicoRegistroBody,
   PacienteLoginBody,
   PacientePerfil,
@@ -104,6 +106,8 @@ export const api = {
         body: { token, nueva_contrasena },
       }),
     me: (token: string) => apiFetch<MedicoPerfil>('/medicos/me', { token }),
+    actualizarPerfil: (token: string, body: MedicoPerfilUpdateBody) =>
+      apiFetch<MedicoPerfil>('/medicos/me', { method: 'PATCH', body, token }),
     misPacientes: (token: string) => apiFetch<PacientePerfil[]>('/medicos/me/pacientes', { token }),
     vincularPaciente: (token: string, dni: string, pin: string) =>
       apiFetch<PacientePerfil>('/medicos/me/vincular', { method: 'POST', body: { dni, pin }, token }),
@@ -144,5 +148,8 @@ export const api = {
     me: (token: string) => apiFetch<PacientePerfil>('/pacientes/me', { token }),
     actualizarPerfil: (token: string, body: PacientePerfilUpdateBody) =>
       apiFetch<PacientePerfil>('/pacientes/me', { method: 'PATCH', body, token }),
+    medicosACargo: (token: string) => apiFetch<MedicoACargo[]>('/pacientes/me/medicos', { token }),
+    historialFrecuencia: (token: string) =>
+      apiFetch<Frecuencia[]>('/pacientes/me/frecuencia', { token }),
   },
 }

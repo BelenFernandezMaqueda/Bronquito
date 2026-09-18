@@ -22,6 +22,7 @@ export function ResetearPage({ modo }: ResetearPageProps) {
 
   const esPin = modo === 'pin'
   const etiqueta = esPin ? 'PIN' : 'contraseña'
+  const rol = esPin ? 'paciente' : 'medico'
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -56,7 +57,7 @@ export function ResetearPage({ modo }: ResetearPageProps) {
           El link es inválido: falta el token. Pedí uno nuevo desde "¿Olvidaste tu {etiqueta}?".
         </div>
         <div className="auth-links">
-          <Link to="/recuperar">← Pedir un link nuevo</Link>
+          <Link to={`/recuperar?rol=${rol}`}>← Pedir un link nuevo</Link>
         </div>
       </AuthShell>
     )
@@ -69,7 +70,7 @@ export function ResetearPage({ modo }: ResetearPageProps) {
           Listo. Ya podés iniciar sesión con {esPin ? 'tu nuevo PIN' : 'tu nueva contraseña'}.
         </div>
         <div className="auth-links">
-          <Link to="/login">Ir al login →</Link>
+          <Link to={`/login?rol=${rol}`}>Ir al login →</Link>
         </div>
       </AuthShell>
     )
@@ -106,7 +107,7 @@ export function ResetearPage({ modo }: ResetearPageProps) {
       </form>
 
       <div className="auth-links">
-        <Link to="/login">← Volver al login</Link>
+        <Link to={`/login?rol=${rol}`}>← Volver al login</Link>
       </div>
     </AuthShell>
   )

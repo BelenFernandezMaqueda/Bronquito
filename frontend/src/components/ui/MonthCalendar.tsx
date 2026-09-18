@@ -36,7 +36,7 @@ function isoDe(anio: number, mes: number, dia: number): string {
  * mismo día), gana la última del array — pasar `historial` ordenado del más
  * viejo al más nuevo.
  */
-function diasVigentesEn(historial: RecomendacionVigente[], iso: string): number[] {
+export function diasVigentesEn(historial: RecomendacionVigente[], iso: string): number[] {
   let elegida: RecomendacionVigente | null = null
   for (const r of historial) {
     if (r.vigenteDesde > iso) continue
@@ -142,7 +142,14 @@ export function MonthCalendar({
                 .join(' ')}
               title={esRecomendado ? `${c.iso}: día recomendado para entrenar` : c.iso}
             >
-              <span className="cal-day-number">{c.dia}</span>
+              <div className="cal-day-heading">
+                <span className="cal-day-number">{c.dia}</span>
+                {esRecomendado && (
+                  <span className="cal-recommendation-check" aria-label="Día recomendado para entrenar">
+                    ✓
+                  </span>
+                )}
+              </div>
               <div className="cal-ribbons">
                 {tieneEvaluacion &&
                   (onClickEvaluacion ? (

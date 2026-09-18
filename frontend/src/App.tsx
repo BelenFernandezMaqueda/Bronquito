@@ -14,6 +14,7 @@ import { CompletarPerfilPage } from './pages/paciente/CompletarPerfilPage'
 import { PatientDashboard } from './pages/paciente/PatientDashboard'
 import { DoctorView } from './pages/medico/DoctorView'
 import { EvaluationSignalPage } from './pages/medico/EvaluationSignalPage'
+import { ConfiguracionPage } from './pages/configuracion/ConfiguracionPage'
 
 /** ¿El paciente logueado todavía tiene que completar su perfil? */
 function pacienteIncompleto(perfil: Perfil | null): boolean {
@@ -41,6 +42,17 @@ function Dashboard() {
     <>
       <Header />
       <main>{perfil?.rol === 'medico' ? <DoctorView /> : <PatientDashboard />}</main>
+    </>
+  )
+}
+
+function Configuracion() {
+  return (
+    <>
+      <Header />
+      <main>
+        <ConfiguracionPage />
+      </main>
     </>
   )
 }
@@ -112,6 +124,15 @@ export default function App() {
         element={
           <SoloAutenticados>
             <Dashboard />
+          </SoloAutenticados>
+        }
+      />
+
+      <Route
+        path="/configuracion"
+        element={
+          <SoloAutenticados>
+            <Configuracion />
           </SoloAutenticados>
         }
       />

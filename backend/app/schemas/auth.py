@@ -3,6 +3,21 @@ from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
+EnfermedadPreexistente = Literal[
+    "EPOC",
+    "Asma",
+    "Lesión Medular",
+    "Fibrosis quística",
+    "Otra",
+    "NS/NC",
+]
+
+
+def validar_nombre_sin_numeros(valor: str) -> str:
+    if any(caracter.isdigit() for caracter in valor):
+        raise ValueError("El nombre y el apellido no pueden contener números.")
+    return valor
+
 
 # --- Médicos ---------------------------------------------------------------
 
@@ -15,6 +30,11 @@ class MedicoRegistro(BaseModel):
     nombre: str = Field(min_length=1, max_length=80)
     apellido: str = Field(min_length=1, max_length=80)
     acepto_terminos: bool
+
+    @field_validator("nombre", "apellido")
+    @classmethod
+    def nombre_sin_numeros(cls, valor: str) -> str:
+        return validar_nombre_sin_numeros(valor)
 
     @field_validator("acepto_terminos")
     @classmethod
@@ -51,7 +71,20 @@ class PacienteRegistro(BaseModel):
     fecha_nacimiento: date
     sexo: Literal["F", "M", "X"]
     fumador: bool = False
+    enfermedades: list[EnfermedadPreexistente] = Field(min_length=1, max_length=6)
     acepto_terminos: bool
+
+    @field_validator("nombre", "apellido")
+    @classmethod
+    def nombre_sin_numeros(cls, valor: str) -> str:
+        return validar_nombre_sin_numeros(valor)
+
+    @field_validator("enfermedades")
+    @classmethod
+    def enfermedades_sin_repetir(cls, valores: list[EnfermedadPreexistente]) -> list[EnfermedadPreexistente]:
+        if len(valores) != len(set(valores)):
+            raise ValueError("No podés seleccionar la misma enfermedad más de una vez.")
+        return valores
 
     @field_validator("acepto_terminos")
     @classmethod

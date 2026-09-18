@@ -50,6 +50,7 @@ class Paciente(Base):
     fecha_nacimiento: Mapped[date] = mapped_column(Date)
     sexo: Mapped[str] = mapped_column(String(1))  # 'F' / 'M' / 'X'
     fumador: Mapped[bool] = mapped_column(Boolean, default=False)
+    enfermedades: Mapped[str | None] = mapped_column(String(160), nullable=True)
     fecha_registro: Mapped[date] = mapped_column(Date)
 
     origen: Mapped[OrigenPaciente] = mapped_column(

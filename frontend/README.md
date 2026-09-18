@@ -88,8 +88,8 @@ src/
       DoctorView.tsx        Arma el layout de dos columnas (lista + detalle).
       PatientListPanel.tsx  Buscador + lista de pacientes con adherencia + invitar paciente.
       InvitePatientModal.tsx Flujo de alta de paciente (solicitud pendiente de aceptación).
-      PatientDetail.tsx     Tabs Calibraciones / Entrenamiento / Calendario + botones para
-                           iniciar calibración/entrenamiento "en consultorio".
+      PatientDetail.tsx     Tabs Evaluaciones / Entrenamiento / Calendario + botones para
+                           iniciar evaluación/entrenamiento "en consultorio".
       FrequencyModal.tsx    Modal para modificar manualmente la frecuencia recomendada.
   App.tsx                    Rutas (react-router-dom) + guards: SoloAnonimos / SoloAutenticados,
                            redirección a "completá tu perfil", y el dashboard según rol.
@@ -113,7 +113,7 @@ src/
   el backend manda el mail con el link a `/resetear/{pin,contrasena}?token=...` por Gmail
   (ver `backend/README.md`, sección "Mails").
 - **Datos mock centralizados en `mockData.ts`.** Todas las pantallas leen de ahí a través
-  de funciones (`pacientesDeMedico`, `calibracionesDe`, `resumenProgresoDe`, etc.) en vez
+  de funciones (`pacientesDeMedico`, `evaluacionesDe`, `resumenProgresoDe`, etc.) en vez
   de tener los datos hardcodeados en cada componente. Esas funciones son el punto exacto
   donde después se conecta el fetch a la API real.
 - **"Iniciar sesión" / "Iniciar en consultorio" son simulaciones visuales.** El

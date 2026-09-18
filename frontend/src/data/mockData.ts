@@ -4,7 +4,7 @@ import type {
   Medico,
   Paciente,
   ResumenProgreso,
-  SesionCalibracion,
+  SesionEvaluacion,
   SesionEntrenamiento,
 } from '../types'
 
@@ -114,7 +114,7 @@ export const pacientes: Paciente[] = [
 export const pacienteActualId = 'pac-1'
 
 // ---------------------------------------------------------------------------
-// Sesiones de calibración
+// Sesiones de evaluación
 // ---------------------------------------------------------------------------
 
 function curvaEjemplo(escala: number): Array<{ x: number; y: number }> {
@@ -131,7 +131,7 @@ function curvaEjemplo(escala: number): Array<{ x: number; y: number }> {
   return base.map((p) => ({ x: p.x, y: +(p.y * escala).toFixed(2) }))
 }
 
-export const calibraciones: SesionCalibracion[] = [
+export const evaluaciones: SesionEvaluacion[] = [
   {
     id: 'cal-1-1',
     pacienteId: 'pac-1',
@@ -139,7 +139,7 @@ export const calibraciones: SesionCalibracion[] = [
     pim: 58,
     volumen: 2.4,
     curvaFlujoVolumen: curvaEjemplo(0.75),
-    observaciones: 'Calibración inicial',
+    observaciones: 'Evaluación inicial',
     enConsultorio: true,
   },
   {
@@ -178,7 +178,7 @@ export const calibraciones: SesionCalibracion[] = [
     pim: 40,
     volumen: 1.9,
     curvaFlujoVolumen: curvaEjemplo(0.6),
-    observaciones: 'Calibración inicial',
+    observaciones: 'Evaluación inicial',
     enConsultorio: true,
   },
   {
@@ -206,7 +206,7 @@ export const calibraciones: SesionCalibracion[] = [
     pim: 35,
     volumen: 1.6,
     curvaFlujoVolumen: curvaEjemplo(0.5),
-    observaciones: 'Calibración inicial',
+    observaciones: 'Evaluación inicial',
     enConsultorio: true,
   },
   {
@@ -225,7 +225,7 @@ export const calibraciones: SesionCalibracion[] = [
     pim: 90,
     volumen: 3.2,
     curvaFlujoVolumen: curvaEjemplo(1.1),
-    observaciones: 'Calibración inicial',
+    observaciones: 'Evaluación inicial',
     enConsultorio: true,
   },
   {
@@ -263,8 +263,8 @@ export const entrenamientos: SesionEntrenamiento[] = [
 // Derivados / helpers para la UI
 // ---------------------------------------------------------------------------
 
-export function calibracionesDe(pacienteId: string): SesionCalibracion[] {
-  return calibraciones
+export function evaluacionesDe(pacienteId: string): SesionEvaluacion[] {
+  return evaluaciones
     .filter((c) => c.pacienteId === pacienteId)
     .sort((a, b) => +new Date(b.fecha) - +new Date(a.fecha))
 }
@@ -276,7 +276,7 @@ export function entrenamientosDe(pacienteId: string): SesionEntrenamiento[] {
 }
 
 export function ultimaSesionDe(pacienteId: string): string | undefined {
-  const todas = [...entrenamientosDe(pacienteId), ...calibracionesDe(pacienteId)].sort(
+  const todas = [...entrenamientosDe(pacienteId), ...evaluacionesDe(pacienteId)].sort(
     (a, b) => +new Date(b.fecha) - +new Date(a.fecha),
   )
   return todas[0]?.fecha
@@ -304,7 +304,7 @@ const DIAS_SEMANA = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']
 
 export function rachaSemanalDe(pacienteId: string): DiaRacha[] {
   const fechasConSesion = new Set(
-    [...entrenamientosDe(pacienteId), ...calibracionesDe(pacienteId)].map((s) => s.fecha),
+    [...entrenamientosDe(pacienteId), ...evaluacionesDe(pacienteId)].map((s) => s.fecha),
   )
   // lunes de la semana de HOY
   const diaSemanaHoy = (HOY.getDay() + 6) % 7 // 0 = lunes
@@ -326,7 +326,7 @@ export function rachaSemanalDe(pacienteId: string): DiaRacha[] {
 
 export function rachaActualDias(pacienteId: string): number {
   const fechasConSesion = new Set(
-    [...entrenamientosDe(pacienteId), ...calibracionesDe(pacienteId)].map((s) => s.fecha),
+    [...entrenamientosDe(pacienteId), ...evaluacionesDe(pacienteId)].map((s) => s.fecha),
   )
   let racha = 0
   const cursor = new Date(HOY)

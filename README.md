@@ -84,7 +84,7 @@ El login ya está conectado (hay cliente HTTP en `frontend/src/api/` y sesión e
 2. Crear en el backend los endpoints de evaluaciones / entrenamientos / rutina / notas
    médicas (por ahora sólo están las tablas).
 3. Reemplazar, una función a la vez, las de `mockData.ts` (`pacientesDeMedico`,
-   `calibracionesDe`, etc.) por llamadas a la API, manejando estados de "cargando"/"error".
+   `evaluacionesDe`, etc.) por llamadas a la API, manejando estados de "cargando"/"error".
 
 ## Qué falta para producción (repaso)
 

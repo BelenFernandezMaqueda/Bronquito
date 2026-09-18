@@ -3,7 +3,7 @@ import { Modal } from './Modal'
 import { DuckLogo } from './DuckLogo'
 import { formatearDuracion } from '../../data/mockData'
 
-export type DeviceSessionKind = 'entrenamiento' | 'calibracion'
+export type DeviceSessionKind = 'entrenamiento' | 'evaluacion'
 
 interface DeviceSessionModalProps {
   tipo: DeviceSessionKind
@@ -54,7 +54,7 @@ export function DeviceSessionModal({ tipo, nombrePaciente, onClose, onFinalizar 
   const pctProgreso = Math.min(100, Math.round((segundos / duracionObjetivo) * 100))
 
   const resultadoDuracionReal = tipo === 'entrenamiento' ? 8 * 60 - 20 : undefined
-  const resultadoPim = tipo === 'calibracion' ? 76 : undefined
+  const resultadoPim = tipo === 'evaluacion' ? 76 : undefined
 
   const titulo =
     tipo === 'entrenamiento'
@@ -62,8 +62,8 @@ export function DeviceSessionModal({ tipo, nombrePaciente, onClose, onFinalizar 
         ? `Entrenamiento en consultorio · ${nombrePaciente}`
         : 'Sesión de entrenamiento'
       : nombrePaciente
-        ? `Calibración en consultorio · ${nombrePaciente}`
-        : 'Calibración'
+        ? `Evaluación en consultorio · ${nombrePaciente}`
+        : 'Evaluación'
 
   return (
     <Modal

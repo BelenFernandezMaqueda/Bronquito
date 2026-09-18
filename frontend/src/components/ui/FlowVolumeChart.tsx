@@ -8,7 +8,7 @@ interface FlowVolumeChartProps {
   caption: string
 }
 
-/** Curva flujo-volumen de una calibración, como polyline SVG (igual que en el mockup). */
+/** Curva flujo-volumen de una evaluación, como polyline SVG (igual que en el mockup). */
 export function FlowVolumeChart({ puntos, caption }: FlowVolumeChartProps) {
   const maxX = Math.max(...puntos.map((p) => p.x), 1)
   const maxY = Math.max(...puntos.map((p) => p.y), 1)
