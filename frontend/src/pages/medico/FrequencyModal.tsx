@@ -18,6 +18,7 @@ export function FrequencyModal({ frecuenciaActual, diasActuales, nombrePaciente,
   const [dias, setDias] = useState(diasActuales)
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const diasCoinciden = dias.length === seleccion
 
   function toggleDia(indice: number) {
     setDias((actuales) =>
@@ -26,6 +27,7 @@ export function FrequencyModal({ frecuenciaActual, diasActuales, nombrePaciente,
   }
 
   async function guardar() {
+    if (!diasCoinciden) return
     setGuardando(true)
     setError(null)
     try {
@@ -47,7 +49,7 @@ export function FrequencyModal({ frecuenciaActual, diasActuales, nombrePaciente,
           <button className="btn btn-outline" onClick={onClose} disabled={guardando}>
             Cancelar
           </button>
-          <button className="btn btn-teal" onClick={guardar} disabled={guardando}>
+          <button className="btn btn-teal" onClick={guardar} disabled={guardando || !diasCoinciden}>
             {guardando ? 'Guardando…' : 'Guardar'}
           </button>
         </>
@@ -90,9 +92,9 @@ export function FrequencyModal({ frecuenciaActual, diasActuales, nombrePaciente,
             </button>
           ))}
         </div>
-        {dias.length > 0 && dias.length !== seleccion && (
+        {!diasCoinciden && (
           <p className="field-hint">
-            Marcaste {dias.length} día{dias.length === 1 ? '' : 's'}, pero elegiste {seleccion} sesiones por semana.
+            Marcá {seleccion} día{seleccion === 1 ? '' : 's'} para que coincidan con las {seleccion} sesiones semanales.
           </p>
         )}
       </div>

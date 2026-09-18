@@ -62,7 +62,7 @@ def _layout(*, preheader: str, titulo: str, cuerpo_html: str) -> str:
           <table role="presentation" cellspacing="0" cellpadding="0">
             <tr>
               <td style="vertical-align:middle;padding-right:12px;">
-                <img src="cid:{DUCK_CID}" width="42" height="34" alt="" style="display:block;border:0;">
+                <img src="cid:{DUCK_CID}" width="30" height="42" alt="" style="display:block;border:0;">
               </td>
               <td style="vertical-align:middle;">
                 <div style="font-family:{_FUENTE_TITULO};font-size:23px;font-weight:800;color:#ffffff;line-height:1.1;">

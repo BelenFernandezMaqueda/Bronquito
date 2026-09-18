@@ -10,6 +10,7 @@ import type {
   Frecuencia,
   FrecuenciaCrearBody,
   MedicoLoginBody,
+  MedicoACargo,
   MedicoPerfil,
   MedicoPerfilUpdateBody,
   MedicoRegistroBody,
@@ -147,5 +148,8 @@ export const api = {
     me: (token: string) => apiFetch<PacientePerfil>('/pacientes/me', { token }),
     actualizarPerfil: (token: string, body: PacientePerfilUpdateBody) =>
       apiFetch<PacientePerfil>('/pacientes/me', { method: 'PATCH', body, token }),
+    medicosACargo: (token: string) => apiFetch<MedicoACargo[]>('/pacientes/me/medicos', { token }),
+    historialFrecuencia: (token: string) =>
+      apiFetch<Frecuencia[]>('/pacientes/me/frecuencia', { token }),
   },
 }

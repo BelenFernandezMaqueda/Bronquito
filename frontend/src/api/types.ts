@@ -27,6 +27,13 @@ export interface MedicoPerfil {
   fecha_registro: string
 }
 
+/** Médico que tiene acceso vigente a la información clínica del paciente. */
+export interface MedicoACargo {
+  id_medico: number
+  nombre: string
+  apellido: string
+}
+
 export interface PacientePerfil {
   id_paciente: number
   dni: string

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { ApiError, api } from '../../api/client'
 import { useSession } from '../../auth/session'
@@ -12,8 +12,9 @@ type Tab = 'paciente' | 'medico'
 export function LoginPage() {
   const { iniciarSesion } = useSession()
   const navigate = useNavigate()
+  const [params, setParams] = useSearchParams()
 
-  const [tab, setTab] = useState<Tab>('paciente')
+  const tab: Tab = params.get('rol') === 'medico' ? 'medico' : 'paciente'
   const [error, setError] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
 
@@ -23,6 +24,11 @@ export function LoginPage() {
   // medico
   const [usuario, setUsuario] = useState('')
   const [contrasena, setContrasena] = useState('')
+
+  function cambiarTab(nuevo: Tab) {
+    setParams({ rol: nuevo }, { replace: true })
+    setError(null)
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -49,8 +55,7 @@ export function LoginPage() {
           aria-selected={tab === 'paciente'}
           className={tab === 'paciente' ? 'active' : ''}
           onClick={() => {
-            setTab('paciente')
-            setError(null)
+            cambiarTab('paciente')
           }}
         >
           Soy paciente
@@ -60,8 +65,7 @@ export function LoginPage() {
           aria-selected={tab === 'medico'}
           className={tab === 'medico' ? 'active' : ''}
           onClick={() => {
-            setTab('medico')
-            setError(null)
+            cambiarTab('medico')
           }}
         >
           Soy médico/a
@@ -127,7 +131,7 @@ export function LoginPage() {
       </form>
 
       <div className="auth-links">
-        <Link to="/recuperar">
+        <Link to={`/recuperar?rol=${tab}`}>
           {tab === 'paciente' ? '¿Olvidaste tu PIN?' : '¿Olvidaste tu contraseña?'}
         </Link>
         <span>

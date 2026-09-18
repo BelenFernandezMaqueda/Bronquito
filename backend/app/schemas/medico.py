@@ -13,6 +13,16 @@ class MedicoPerfilOut(BaseModel):
     fecha_registro: date
 
 
+class MedicoACargoOut(BaseModel):
+    """Datos mínimos que un paciente puede ver de un médico con acceso a su ficha."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id_medico: int
+    nombre: str
+    apellido: str
+
+
 class MedicoPerfilUpdate(BaseModel):
     usuario: EmailStr | None = None
     nombre: str | None = Field(default=None, min_length=1, max_length=80)
