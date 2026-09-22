@@ -2,6 +2,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { diasVigentesEn, MonthCalendar } from '../../components/ui/MonthCalendar'
 import { DeviceSessionModal } from '../../components/ui/DeviceSessionModal'
+import { VideoLightbox } from '../../components/ui/VideoLightbox'
+import { VideoCarousel } from '../../components/ui/VideoCarousel'
+import type { VideoTutorial } from '../../components/ui/VideoCarousel'
 import { MedicalTeamPanel } from './MedicalTeamPanel'
 import { formatearFecha, isoArgentina } from '../../data/mockData'
 import { useSession } from '../../auth/session'
@@ -14,6 +17,13 @@ const DIAS_SEMANA_CORTOS = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']
 const DIAS_SEMANA = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
 const INTERVALO_ACTUALIZACION_FRECUENCIA_MS = 30_000
 
+const TUTORIALES: VideoTutorial[] = [
+  { id: 'nSOtWvB968U', titulo: 'Cómo usar el dispositivo' },
+  { id: 'nDpKYFcJNK0', titulo: 'Tutorial 2' },
+  { id: 'jNmR3BjkDug', titulo: 'Tutorial 3' },
+  { id: '9sUgVwYjRTE', titulo: 'Tutorial 4' },
+]
+
 function diaDeSemana(fecha: Date): number {
   return (fecha.getDay() + 6) % 7 // 0 = lunes
 }
@@ -21,6 +31,7 @@ function diaDeSemana(fecha: Date): number {
 export function PatientDashboard() {
   const [subVista, setSubVista] = useState<SubVista>('resumen')
   const [sesionAbierta, setSesionAbierta] = useState<'entrenamiento' | 'evaluacion' | null>(null)
+  const [videoAbierto, setVideoAbierto] = useState<{ id: string; titulo: string } | null>(null)
 
   const { perfil, token } = useSession()
 
@@ -269,35 +280,7 @@ export function PatientDashboard() {
             <div className="block-title">
               <h3>Tutoriales</h3>
             </div>
-            <div className="grid cols-3">
-              <div className="card stat-card" style={{ background: '#b3ecf2' }}>
-                <div className="stat-icon" aria-hidden="true">
-                  📘
-                </div>
-                <div className="stat-label" style={{ fontFamily: "'Baloo 2', system-ui, sans-serif", color: 'var(--ink)' }}>
-                  Cómo usar el dispositivo
-                </div>
-                <div className="stat-sub neutral">Próximamente</div>
-              </div>
-              <div className="card stat-card" style={{ background: 'var(--pink-soft)' }}>
-                <div className="stat-icon" aria-hidden="true">
-                  🫁
-                </div>
-                <div className="stat-label" style={{ fontFamily: "'Baloo 2', system-ui, sans-serif", color: 'var(--ink)' }}>
-                  Ejercicios de respiración
-                </div>
-                <div className="stat-sub neutral">Próximamente</div>
-              </div>
-              <div className="card stat-card" style={{ background: 'var(--yellow-soft)' }}>
-                <div className="stat-icon" aria-hidden="true">
-                  🧼
-                </div>
-                <div className="stat-label" style={{ fontFamily: "'Baloo 2', system-ui, sans-serif", color: 'var(--ink)' }}>
-                  Cuidado del equipo
-                </div>
-                <div className="stat-sub neutral">Próximamente</div>
-              </div>
-            </div>
+            <VideoCarousel videos={TUTORIALES} onSeleccionar={(video) => setVideoAbierto(video)} />
           </section>
 
           <section className="block">
@@ -346,6 +329,13 @@ export function PatientDashboard() {
 
       {sesionAbierta && (
         <DeviceSessionModal tipo={sesionAbierta} onClose={() => setSesionAbierta(null)} />
+      )}
+      {videoAbierto && (
+        <VideoLightbox
+          videoId={videoAbierto.id}
+          titulo={videoAbierto.titulo}
+          onClose={() => setVideoAbierto(null)}
+        />
       )}
       </div>
     </div>
