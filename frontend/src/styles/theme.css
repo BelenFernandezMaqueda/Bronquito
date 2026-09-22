@@ -1319,10 +1319,7 @@ button.cal-ribbon {
   margin-bottom: 6px;
 }
 
-.field input[type='text'],
-.field input[type='email'],
-.field input[type='number'],
-.field input[type='password'],
+.field input,
 .field select {
   width: 100%;
   padding: 10px 12px;
@@ -1657,16 +1654,18 @@ button.cal-ribbon {
 
 .field-check {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 9px;
+  font-family: 'Nunito', system-ui, sans-serif;
+  font-weight: 400;
   font-size: 13px;
+  line-height: 1.3;
   color: var(--ink-soft);
   margin: 4px 0 18px;
   text-align: left;
 }
 
 .field-check input {
-  margin-top: 2px;
   width: 16px;
   height: 16px;
   flex-shrink: 0;
@@ -1684,6 +1683,7 @@ button.cal-ribbon {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   column-gap: 14px;
+  align-items: start;
 }
 
 .enfermedades-options .field-check {
